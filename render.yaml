@@ -1,0 +1,90 @@
+# Revio AI — one-click Render blueprint (web + Celery worker + beat + Redis).
+# Render reads this when you create a Blueprint from the repo.
+# Postgres is external (your Supabase) — provide DATABASE_URL / DATABASE_URL_SYNC.
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # --- Redis (broker + cache) ---
+  - type: redis
+    name: revio-redis
+    plan: free
+    maxmemoryPolicy: noeviction
+    ipAllowList: []          # only reachable from your Render services
+
+  # --- API + website (uvicorn) ---
+  - type: web
+    name: revio-ai-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    preDeployCommand: alembic upgrade head   # run migrations before each deploy
+    envVars:
+      - fromGroup: revio-env
+      - key: REDIS_URL
+        fromService: { type: redis, name: revio-redis, property: connectionString }
+      - key: CELERY_BROKER_URL
+        fromService: { type: redis, name: revio-redis, property: connectionString }
+      - key: CELERY_RESULT_BACKEND
+        fromService: { type: redis, name: revio-redis, property: connectionString }
+
+  # --- Celery worker (runs the agents) ---
+  - type: worker
+    name: revio-ai-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter            # Render background workers are paid (no free tier)
+    dockerCommand: celery -A app.workers.celery_app worker -Q revive,pulse,scout,message,execution,response,report,orchestrator,scheduler --loglevel=info
+    envVars:
+      - fromGroup: revio-env
+      - key: REDIS_URL
+        fromService: { type: redis, name: revio-redis, property: connectionString }
+      - key: CELERY_BROKER_URL
+        fromService: { type: redis, name: revio-redis, property: connectionString }
+      - key: CELERY_RESULT_BACKEND
+        fromService: { type: redis, name: revio-redis, property: connectionString }
+
+  # --- Celery beat (scheduler) ---
+  - type: worker
+    name: revio-ai-beat
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    dockerCommand: celery -A app.workers.celery_app beat --loglevel=info
+    envVars:
+      - fromGroup: revio-env
+      - key: REDIS_URL
+        fromService: { type: redis, name: revio-redis, property: connectionString }
+      - key: CELERY_BROKER_URL
+        fromService: { type: redis, name: revio-redis, property: connectionString }
+      - key: CELERY_RESULT_BACKEND
+        fromService: { type: redis, name: revio-redis, property: connectionString }
+
+# --- Shared secrets (set the sync:false ones in the Render dashboard) ---
+envVarGroups:
+  - name: revio-env
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "true"                # exposes /docs so you can test; set false later
+      - key: AUTO_SEND_ENABLED
+        value: "false"               # compliance: keep off until suppression exists
+      - key: LLM_PROVIDER
+        value: anthropic
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      # ENCRYPTION_KEY must be a valid Fernet key — generate with:
+      #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false                  # Supabase pooler, asyncpg: postgresql+asyncpg://...
+      - key: DATABASE_URL_SYNC
+        sync: false                  # Supabase pooler, psycopg2: postgresql://...?sslmode=require
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
