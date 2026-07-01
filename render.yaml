@@ -88,3 +88,6 @@ envVarGroups:
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
+      # ADMIN_TOKEN — pick any strong secret; you enter it in the /admin panel.
+      - key: ADMIN_TOKEN
+        sync: false

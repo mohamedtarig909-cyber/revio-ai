@@ -65,6 +65,8 @@ class Settings(BaseSettings):
 
     sentry_dsn: str = ""
 
+    admin_token: str = ""   # gate for the /api/v1/admin control panel
+
     revive_inactivity_days: int = 30
     pulse_revenue_risk_threshold: float = 50000.0
     auto_send_enabled: bool = False   # compliance: no auto-send until suppression/opt-out exists

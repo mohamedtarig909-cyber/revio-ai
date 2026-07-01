@@ -53,6 +53,12 @@ async def download_site():
                         filename="revio-ai-website.html")
 
 
+@app.get("/admin", include_in_schema=False)
+async def admin_panel():
+    """Operator control panel — drive & test the system (uses ADMIN_TOKEN)."""
+    return FileResponse(WEB_DIR / "admin.html")
+
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "version": __version__, "service": "revio-ai-api"}

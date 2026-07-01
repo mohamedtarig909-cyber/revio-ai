@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Revio AI — Admin Control Panel</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%232DD4BF'/><path d='M5 18h4l3 6 4-16 3 10h8' fill='none' stroke='%2306080D' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>"/>
+<style>
+  :root{--bg:#0A0E16;--card:#141a24;--bd:rgba(255,255,255,.1);--tx:#EAF0F8;--mut:#93a1b5;--sig:#2DD4BF;--gold:#FBBF24;--rose:#FB7185;--vi:#8B7BFF}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--tx);line-height:1.5;padding:24px;max-width:1080px;margin:0 auto}
+  h1{font-size:22px;font-weight:800;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .logo{width:30px;height:30px;border-radius:9px;background:conic-gradient(from 200deg,var(--sig),var(--vi),#56A8FF,var(--sig));display:inline-block}
+  .sub{color:var(--mut);font-size:13px;margin-bottom:20px}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:16px}
+  .card h2{font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--sig);margin-bottom:14px;font-family:'JetBrains Mono',monospace}
+  label{display:block;font-size:12px;color:var(--mut);margin:10px 0 5px}
+  input,select{width:100%;padding:9px 11px;border-radius:8px;background:#0d121b;border:1px solid var(--bd);color:var(--tx);font-size:13.5px;outline:none;font-family:inherit}
+  input:focus{border-color:var(--sig)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .row>div{flex:1;min-width:140px}
+  button{font-family:inherit;font-weight:600;font-size:13px;border:none;border-radius:9px;padding:10px 16px;cursor:pointer;background:#1b2330;color:var(--tx);border:1px solid var(--bd);transition:.15s;margin:6px 6px 0 0}
+  button:hover{border-color:var(--sig)}
+  button.p{background:linear-gradient(135deg,var(--sig),#34E0C8);color:#04201C;border:none}
+  button.d{background:rgba(251,113,133,.15);border-color:rgba(251,113,133,.4);color:var(--rose)}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+  .kpi{background:#0d121b;border:1px solid var(--bd);border-radius:10px;padding:14px}
+  .kpi .v{font-size:26px;font-weight:800}.kpi .k{font-size:11px;color:var(--mut);margin-top:3px}
+  .kpi .v.t{color:var(--sig)}.kpi .v.g{color:var(--gold)}
+  pre{background:#05080d;border:1px solid var(--bd);border-radius:10px;padding:14px;font-size:12px;font-family:'JetBrains Mono',monospace;color:#a9e8dd;overflow:auto;max-height:340px;white-space:pre-wrap;word-break:break-word}
+  .pill{display:inline-block;font-size:11px;padding:3px 9px;border-radius:99px;font-family:'JetBrains Mono',monospace}
+  .pill.ok{background:rgba(45,212,191,.15);color:var(--sig)}.pill.off{background:rgba(148,161,181,.15);color:var(--mut)}
+  .muted{color:var(--mut);font-size:12px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--bd)}
+  th{color:var(--mut);font-weight:600}
+  code{background:#05080d;padding:2px 6px;border-radius:5px;font-size:12px;color:var(--sig);word-break:break-all}
+  @media(max-width:640px){.grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+  <h1><span class="logo"></span>Revio AI — Admin Control Panel</h1>
+  <p class="sub">Drive and test the autonomous system by hand. Everything here uses your <b>ADMIN_TOKEN</b>.</p>
+
+  <div class="card">
+    <h2>Connection</h2>
+    <div class="row">
+      <div><label>Backend base URL (blank = same origin)</label><input id="base" placeholder="https://revio-ai-api.onrender.com"/></div>
+      <div><label>Admin token (X-Admin-Token)</label><input id="atoken" type="password" placeholder="your ADMIN_TOKEN"/></div>
+    </div>
+    <button class="p" onclick="saveConn()">Save connection</button>
+    <span id="connState" class="muted"></span>
+  </div>
+
+  <div class="card">
+    <h2>1 · Bootstrap workspace</h2>
+    <div class="row">
+      <div><label>Company</label><input id="company" value="Test Company"/></div>
+      <div><label>Admin email</label><input id="email" value="admin@revio.ai"/></div>
+    </div>
+    <button class="p" onclick="bootstrap()">Create org + login token</button>
+    <div id="orgInfo" class="muted" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <h2>2 · Org controls</h2>
+    <div class="muted" style="margin-bottom:8px">Org: <code id="orgLabel">— run bootstrap first —</code></div>
+    <button onclick="setSetting('agents_enabled',true)">Agents ON</button>
+    <button class="d" onclick="setSetting('agents_enabled',false)">Agents OFF</button>
+    <button onclick="setSetting('auto_send_enabled',true)">Auto-send ON</button>
+    <button class="d" onclick="setSetting('auto_send_enabled',false)">Auto-send OFF (safe)</button>
+  </div>
+
+  <div class="card">
+    <h2>3 · Seed test data + run agents</h2>
+    <div class="row" style="margin-bottom:8px">
+      <div style="max-width:160px"><label>Sample dormant leads</label><input id="seedN" type="number" value="5" min="1" max="50"/></div>
+    </div>
+    <button onclick="seed()">Seed dormant leads</button>
+    <button class="p" onclick="run('revive')">▶ Run REVIVE agent</button>
+    <button class="p" onclick="run('pipeline')">▶ Run full pipeline</button>
+    <p class="muted" style="margin-top:8px">REVIVE scores dormant leads. Full pipeline = CRM sync → REVIVE → MESSAGE → (EXECUTION only if auto-send is ON).</p>
+  </div>
+
+  <div class="card">
+    <h2>4 · Overview</h2>
+    <button onclick="overview()">↻ Refresh overview</button>
+    <div class="grid" style="margin-top:12px">
+      <div class="kpi"><div class="v t" id="kLeads">—</div><div class="k">Total leads</div></div>
+      <div class="kpi"><div class="v" id="kDormant">—</div><div class="k">Dormant</div></div>
+      <div class="kpi"><div class="v g" id="kAnalyses">—</div><div class="k">AI analyses</div></div>
+      <div class="kpi"><div class="v" id="kRuns">—</div><div class="k">Agent runs</div></div>
+    </div>
+    <div id="recentRuns"></div>
+  </div>
+
+  <div class="card">
+    <h2>Response log</h2>
+    <pre id="out">Ready. Set your connection above, then Bootstrap.</pre>
+  </div>
+
+<script>
+  const S = {
+    base: localStorage.getItem('rv_base')||'',
+    atoken: localStorage.getItem('rv_atoken')||'',
+    org: localStorage.getItem('rv_org')||'',
+    jwt: localStorage.getItem('rv_jwt')||'',
+  };
+  const $ = id => document.getElementById(id);
+  $('base').value = S.base; $('atoken').value = S.atoken;
+  if (S.org){ $('orgLabel').textContent = S.org; $('orgInfo').innerHTML = 'Org: <code>'+S.org+'</code>'; }
+  refreshConn();
+
+  function refreshConn(){ $('connState').textContent = S.atoken ? '  ✓ token set' : '  (no token yet)'; }
+  function saveConn(){
+    S.base = $('base').value.trim().replace(/\/$/,''); S.atoken = $('atoken').value.trim();
+    localStorage.setItem('rv_base',S.base); localStorage.setItem('rv_atoken',S.atoken);
+    refreshConn(); log({saved:true, base:S.base||'(same origin)'});
+  }
+  function log(o){ $('out').textContent = (typeof o==='string'?o:JSON.stringify(o,null,2)); }
+  function api(path, {method='GET', admin=true, jwt=false}={}){
+    const h = {'Content-Type':'application/json'};
+    if(admin) h['X-Admin-Token']=S.atoken;
+    if(jwt) h['Authorization']='Bearer '+S.jwt;
+    return fetch(S.base+'/api/v1'+path, {method, headers:h})
+      .then(async r=>{ const t=await r.text(); let d; try{d=JSON.parse(t)}catch{d=t}
+        if(!r.ok) throw {status:r.status, body:d}; return d; });
+  }
+  function need(){ if(!S.atoken){ log('Set your Admin token first (Connection card).'); throw 'no token'; } }
+  function needOrg(){ if(!S.org){ log('Run Bootstrap first to create an org.'); throw 'no org'; } }
+
+  async function bootstrap(){
+    try{ need();
+      const q = '?email='+encodeURIComponent($('email').value)+'&company='+encodeURIComponent($('company').value);
+      const d = await api('/admin/bootstrap'+q, {method:'POST'});
+      S.org=d.organization_id; S.jwt=d.access_token;
+      localStorage.setItem('rv_org',S.org); localStorage.setItem('rv_jwt',S.jwt);
+      $('orgLabel').textContent=S.org; $('orgInfo').innerHTML='Org: <code>'+S.org+'</code> · JWT stored for /api/v1 calls';
+      log(d);
+    }catch(e){ log(e); }
+  }
+  async function setSetting(key,val){
+    try{ need(); needOrg();
+      const d = await api('/admin/org/'+S.org+'/settings?'+key+'='+val, {method:'POST'}); log(d);
+    }catch(e){ log(e); }
+  }
+  async function seed(){
+    try{ need(); needOrg();
+      const d = await api('/admin/seed-leads?org_id='+S.org+'&count='+$('seedN').value, {method:'POST'}); log(d);
+    }catch(e){ log(e); }
+  }
+  async function run(which){
+    try{ need(); needOrg(); log('Running '+which+'… (this can take a few seconds — it calls the AI)');
+      const d = await api('/admin/run/'+which+'?org_id='+S.org, {method:'POST'}); log(d);
+    }catch(e){ log(e); }
+  }
+  async function overview(){
+    try{ need(); needOrg();
+      const d = await api('/admin/overview?org_id='+S.org);
+      $('kLeads').textContent=d.leads; $('kDormant').textContent=d.dormant;
+      $('kAnalyses').textContent=d.analyses; $('kRuns').textContent=d.agent_runs;
+      const rows=(d.recent_runs||[]).map(r=>'<tr><td>'+r.agent+'</td><td><span class="pill '+(r.status==='completed'||r.status==='success'?'ok':'off')+'">'+r.status+'</span></td><td class="muted">'+r.started_at.slice(0,19).replace('T',' ')+'</td></tr>').join('');
+      $('recentRuns').innerHTML = rows ? '<table><tr><th>Agent</th><th>Status</th><th>Started</th></tr>'+rows+'</table>' : '<p class="muted" style="margin-top:10px">No agent runs yet — seed leads and run REVIVE.</p>';
+      log(d);
+    }catch(e){ log(e); }
+  }
+</script>
+</body>
+</html>
