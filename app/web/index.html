@@ -637,28 +637,24 @@
 <div class="toast glass" id="toast"></div>
 
 <script>
-  /* ── Supabase (real auth) ── */
-  const SUPABASE_URL = "https://ufpbgagijhkmmfyqihil.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_x1zGB0kWH3DOe8uBnU1FWA_eGrqAaqr";
-  let sb=null, currentUser=null, authMode='signin';
-  let oauthReturn = location.hash.includes('access_token') || /[?&]code=/.test(location.search);
-  if(SUPABASE_URL && SUPABASE_ANON_KEY){
-    const s=document.createElement('script');
-    s.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-    s.onload=()=>{
-      sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-      sb.auth.onAuthStateChange((event,session)=>{
-        currentUser=session?session.user:null; updateAuthUI();
-        if(event==='SIGNED_IN' && oauthReturn){oauthReturn=false;history.replaceState(null,'',location.pathname);launchApp();toast('Signed in ✓');}
-      });
-      sb.auth.getSession().then(({data})=>{currentUser=data.session?data.session.user:null;updateAuthUI();});
-    };
-    document.head.appendChild(s);
+  /* ── Auth (Revio backend: /api/v1/auth) ── */
+  const AUTH_BASE = "";                       // same origin (backend serves this page)
+  let currentUser=null, authMode='signin';
+  let AUTH_TOKEN = localStorage.getItem('revio_token') || '';
+  async function checkSession(){
+    if(!AUTH_TOKEN){ updateAuthUI(); return; }
+    try{
+      const r = await fetch(AUTH_BASE+'/api/v1/auth/me', {headers:{Authorization:'Bearer '+AUTH_TOKEN}});
+      if(r.ok){ currentUser = await r.json(); }
+      else { AUTH_TOKEN=''; localStorage.removeItem('revio_token'); currentUser=null; }
+    }catch(e){ currentUser=null; }   // backend unreachable → stay logged out
+    updateAuthUI();
   }
+  checkSession();
   function updateAuthUI(){
     const cta=document.querySelector('.navcta'); if(!cta) return;
     if(currentUser){
-      const name=(currentUser.user_metadata&&currentUser.user_metadata.full_name)||currentUser.email;
+      const name=currentUser.name||currentUser.email;
       cta.innerHTML='<span style="color:var(--muted);font-size:13px;font-family:var(--mono);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</span>'+
         '<button class="btn btn-ghost" onclick="launchApp()">Command center</button>'+
         '<button class="btn btn-primary" onclick="signOut()">Sign out</button>';
@@ -667,7 +663,7 @@
         '<button class="btn btn-primary" onclick="openAuth(\'signup\')">Get started</button>';
     }
   }
-  function signOut(){if(sb)sb.auth.signOut();currentUser=null;updateAuthUI();backToSite();toast('Signed out')}
+  function signOut(){AUTH_TOKEN='';currentUser=null;localStorage.removeItem('revio_token');localStorage.removeItem('revio_email');updateAuthUI();backToSite();toast('Signed out')}
 
   /* ── Whop checkout links ── */
   const WHOP_LINKS={starter:"https://whop.com/revio-ai/1-a6-15a9/",growth:"https://whop.com/revio-ai/2-f7-5aa7/",scale:"https://whop.com/revio-ai/3-b5/"};
@@ -724,8 +720,8 @@
   function setTxt(id,v){const el=document.getElementById(id);if(el)el.textContent=v}
   async function authHeaders(extra){
     const h=Object.assign({}, extra||{});
-    if(sb){try{const{data}=await sb.auth.getSession();if(data.session)h['Authorization']='Bearer '+data.session.access_token}catch(e){}}
-    return h;   // real signed-in client session only
+    if(AUTH_TOKEN) h['Authorization']='Bearer '+AUTH_TOKEN;   // Revio backend JWT
+    return h;
   }
   function renderLeads(leads){
     if(!leads||!leads.length)return '<div style="color:var(--dim)">No leads scored yet.</div>';
@@ -801,22 +797,22 @@
     authSwap.innerHTML=su?'Already have an account? <a onclick="openAuth(\'signin\')">Sign in</a>':'New to Revio? <a onclick="openAuth(\'signup\')">Create an account</a>'}
   function closeAuth(){ov.classList.remove('open')}
   ov.addEventListener('click',e=>{if(e.target===ov)closeAuth()});
-  async function googleAuth(){if(sb){await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin}});return}toast('Enable Google provider in Supabase to use this')}
-  async function emailAuth(e){e.preventDefault();const f=e.target,email=f.querySelector('input[type=email]').value,pw=f.querySelector('input[type=password]').value;
-    const nmInput=nameField.querySelector('input');const nm=nmInput?nmInput.value:'';
-    if(sb){
-      if(authMode==='signup'){
-        const{data,error}=await sb.auth.signUp({email,password:pw,options:{data:{full_name:nm}}});
-        if(error){toast(error.message);return}
-        if(data.session){closeAuth();launchApp();toast('Account created ✓')}
-        else{closeAuth();toast('Check your email to confirm your account ✉')}
-        return;
-      }
-      const{error}=await sb.auth.signInWithPassword({email,password:pw});
-      if(error){toast(error.message);return}
-      closeAuth();launchApp();toast('Signed in ✓');return;
-    }
-    closeAuth();toast('Demo sign-in — connect Supabase for real accounts');launchApp()}
+  async function googleAuth(){ toast("Google sign-in isn't enabled — use email below"); }
+  async function emailAuth(e){
+    e.preventDefault();
+    const f=e.target, email=f.querySelector('input[type=email]').value, pw=f.querySelector('input[type=password]').value;
+    const nmInput=nameField.querySelector('input'); const nm=nmInput?nmInput.value:'';
+    const path = authMode==='signup' ? '/api/v1/auth/register' : '/api/v1/auth/login';
+    const body = authMode==='signup' ? {email,password:pw,name:nm} : {email,password:pw};
+    try{
+      const r=await fetch(AUTH_BASE+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok){ toast(d.detail||('Sign-in failed ('+r.status+')')); return; }
+      AUTH_TOKEN=d.access_token; localStorage.setItem('revio_token',AUTH_TOKEN); localStorage.setItem('revio_email',d.email||email);
+      await checkSession(); closeAuth(); launchApp();
+      toast(authMode==='signup'?'Account created ✓':'Signed in ✓');
+    }catch(err){ toast('Could not reach the server — is the backend live?'); }
+  }
 
   let tt;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2800)}
 </script>
