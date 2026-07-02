@@ -95,6 +95,13 @@
   </div>
 
   <div class="card">
+    <h2>5 · Users &amp; subscriptions (owner)</h2>
+    <button onclick="loadUsers()">↻ Load all users</button>
+    <span id="userStats" class="muted"></span>
+    <div id="usersOut"></div>
+  </div>
+
+  <div class="card">
     <h2>Response log</h2>
     <pre id="out">Ready. Set your connection above, then Bootstrap.</pre>
   </div>
@@ -152,6 +159,49 @@
   async function run(which){
     try{ need(); needOrg(); log('Running '+which+'… (this can take a few seconds — it calls the AI)');
       const d = await api('/admin/run/'+which+'?org_id='+S.org, {method:'POST'}); log(d);
+    }catch(e){ log(e); }
+  }
+  async function loadUsers(){
+    try{ need();
+      const d = await api('/admin/users');
+      $('userStats').textContent = '  '+d.total+' users · '+d.active_subscriptions+' active subs';
+      const rows = (d.users||[]).map(u=>{
+        const st = u.subscription_status==='active' ? '<span class="pill ok">active</span>'
+                 : '<span class="pill off">'+u.subscription_status+'</span>';
+        return '<tr><td>'+u.email+'</td><td>'+(u.company||'—')+'</td><td>'+st+'</td>'+
+          '<td>'+u.leads+'</td><td>'+(u.claimed?'✓':'unclaimed')+'</td>'+
+          '<td style="white-space:nowrap">'+
+          '<button onclick="impersonate(\''+u.id+'\')" title="Open the app as this user">Impersonate</button>'+
+          '<button onclick="setSub(\''+u.id+'\',\'active\')">Activate</button>'+
+          '<button class="d" onclick="setSub(\''+u.id+'\',\'canceled\')">Cancel</button>'+
+          '<button class="d" onclick="delUser(\''+u.id+'\',\''+u.email+'\')">Delete</button>'+
+          '</td></tr>';
+      }).join('');
+      $('usersOut').innerHTML = rows
+        ? '<table><tr><th>Email</th><th>Company</th><th>Sub</th><th>Leads</th><th>Claimed</th><th>Actions</th></tr>'+rows+'</table>'
+        : '<p class="muted" style="margin-top:10px">No users yet.</p>';
+      log(d);
+    }catch(e){ log(e); }
+  }
+  async function impersonate(id){
+    try{ need();
+      const d = await api('/admin/impersonate?user_id='+id, {method:'POST'});
+      localStorage.setItem('revio_token', d.access_token);
+      log({impersonating:d.email, note:'Token stored — opening the app as this user…'});
+      window.open(S.base ? S.base+'/' : '/', '_blank');
+    }catch(e){ log(e); }
+  }
+  async function setSub(id,status){
+    try{ need();
+      const d = await api('/admin/user/'+id+'/subscription?status='+status, {method:'POST'});
+      log(d); loadUsers();
+    }catch(e){ log(e); }
+  }
+  async function delUser(id,email){
+    if(!confirm('Delete '+email+'? This removes their account permanently.')) return;
+    try{ need();
+      const d = await api('/admin/user/'+id, {method:'DELETE'});
+      log(d); loadUsers();
     }catch(e){ log(e); }
   }
   async function overview(){

@@ -86,6 +86,70 @@ def bootstrap(email: str = Query("admin@revio.ai"),
         }
 
 
+@router.get("/users")
+def list_users(_: None = Depends(require_admin)):
+    """Owner view: every user, their org, subscription status, and lead count."""
+    with SyncSessionLocal() as db:
+        users = db.execute(select(User).order_by(User.created_at.desc())).scalars().all()
+        out = []
+        for u in users:
+            org = db.get(Organization, u.organization_id) if u.organization_id else None
+            leads = db.scalar(select(func.count()).select_from(Lead).where(
+                Lead.organization_id == u.organization_id)) if u.organization_id else 0
+            out.append({
+                "id": str(u.id), "email": u.email, "name": u.name,
+                "subscription_status": u.subscription_status,
+                "organization_id": str(u.organization_id or ""),
+                "company": org.company_name if org else None,
+                "tier": getattr(org, "subscription_tier", None) if org else None,
+                "leads": leads or 0,
+                "claimed": bool(u.hashed_password),
+                "created_at": str(u.created_at),
+            })
+        active = sum(1 for x in out if x["subscription_status"] == "active")
+        return {"users": out, "total": len(out), "active_subscriptions": active}
+
+
+@router.post("/impersonate")
+def impersonate(user_id: UUID, _: None = Depends(require_admin)):
+    """Mint a login token for any user — open the app exactly as they see it."""
+    with SyncSessionLocal() as db:
+        user = db.get(User, user_id)
+        if not user:
+            raise HTTPException(404, "User not found")
+        return {"access_token": create_access_token(user.id),
+                "email": user.email,
+                "note": "Set localStorage.revio_token to this value on the site origin."}
+
+
+@router.post("/user/{user_id}/subscription")
+def set_subscription(user_id: UUID, status: str = Query(...),
+                     _: None = Depends(require_admin)):
+    """Manually activate/cancel a user's subscription (active|trialing|canceled)."""
+    if status not in ("active", "trialing", "past_due", "canceled", "incomplete"):
+        raise HTTPException(400, "Invalid status")
+    with SyncSessionLocal() as db:
+        user = db.get(User, user_id)
+        if not user:
+            raise HTTPException(404, "User not found")
+        user.subscription_status = status
+        db.commit()
+        return {"id": str(user.id), "email": user.email, "subscription_status": status}
+
+
+@router.delete("/user/{user_id}")
+def delete_user(user_id: UUID, _: None = Depends(require_admin)):
+    """Ban/delete an account (their org + data cascade per FK rules)."""
+    with SyncSessionLocal() as db:
+        user = db.get(User, user_id)
+        if not user:
+            raise HTTPException(404, "User not found")
+        email = user.email
+        db.delete(user)
+        db.commit()
+        return {"deleted": email}
+
+
 @router.get("/orgs")
 def list_orgs(_: None = Depends(require_admin)):
     with SyncSessionLocal() as db:
