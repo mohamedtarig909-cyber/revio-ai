@@ -274,6 +274,16 @@
   .empty{padding:50px;text-align:center;color:var(--dim);font-size:15px}
   .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);z-index:200;padding:14px 22px;border-radius:13px;font-size:14px;opacity:0;pointer-events:none;transition:.3s}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* onboarding wizard */
+  .ob-progress{display:flex;gap:8px;justify-content:center;margin-bottom:26px}
+  .ob-progress i{width:34px;height:5px;border-radius:5px;background:rgba(255,255,255,.12);transition:.3s}
+  .ob-progress i.on{background:linear-gradient(90deg,var(--signal),var(--signal-2));box-shadow:0 0 10px var(--glow)}
+  .ob-step{display:none;animation:fade .35s ease}
+  .ob-step.active{display:block}
+  .ob-step .big-ico{font-size:44px;text-align:center;margin-bottom:14px}
+  .ob-actions{display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap}
+  .ob-skip{color:var(--dim);font-size:13px;cursor:pointer;text-align:center;display:block;margin-top:14px}
+  .ob-skip:hover{color:var(--muted)}
 
   @media(max-width:920px){
     .navlinks{display:none}
@@ -537,7 +547,7 @@
     </div>
     <div class="fcol"><h5>Product</h5><a href="#features">Features</a><a href="#calculator">ROI calculator</a><a href="#pricing">Pricing</a><a onclick="goCheckout()" style="cursor:pointer">Command center</a></div>
     <div class="fcol"><h5>Company</h5><a href="#how">How it works</a><a href="#faq">FAQ</a><a onclick="openAuth('signin')" style="cursor:pointer">Sign in</a><a href="#">Contact</a></div>
-    <div class="fcol"><h5>Legal</h5><a href="#">Privacy policy</a><a href="#">Terms of service</a><a href="#">Compliance</a><a href="#">Data deletion</a></div>
+    <div class="fcol"><h5>Legal</h5><a href="#">Privacy policy</a><a href="#">Terms of service</a><a href="#">Compliance</a><a href="#">Data deletion</a><a href="/admin" style="opacity:.55" title="Operator control panel">Operator</a></div>
   </div>
   <div class="fbar">
     <div>© <span id="yr"></span> Revio AI · Recover the revenue you already paid for.</div>
@@ -596,7 +606,7 @@
       <div class="panel" data-panel="outreach"><h2>Multi-channel outreach</h2><div class="empty glass" style="margin-top:20px">Email, SMS and WhatsApp delivery. Requires a sending provider + compliance setup before going live.</div></div>
       <div class="panel" data-panel="decay"><h2>Lead decay radar</h2><div class="empty glass" style="margin-top:20px">Active leads cooling off surface here so you intervene before they die.</div></div>
       <div class="panel" data-panel="winback"><h2>Win-back engine</h2><div class="empty glass" style="margin-top:20px">Past customers with repurchase signals, matched to your best-converting cohort.</div></div>
-      <div class="panel" data-panel="revenue"><h2>Recovered revenue</h2><div class="empty glass" style="margin-top:20px">Closed deals attributed back to the resurrection that started them — your ROI ledger.</div></div>
+      <div class="panel" data-panel="revenue"><h2>Recovered revenue &amp; daily report</h2><div class="empty glass" id="revenuePanel" style="margin-top:20px">Your daily AI executive report and recovered-revenue ledger appear here after the first scan.</div></div>
       <div class="panel" data-panel="billing"><h2>Team &amp; billing</h2><div class="empty glass" style="margin-top:20px;padding:34px"><p style="margin-bottom:18px">Billed via Whop. Manage your subscription:</p><div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><button class="btn btn-ghost" data-plan="starter" onclick="checkout(this)">Starter $149</button><button class="btn btn-primary" data-plan="growth" onclick="checkout(this)">Growth $399</button><button class="btn btn-ghost" data-plan="scale" onclick="checkout(this)">Scale $899</button></div></div></div>
     </div>
   </div>
@@ -632,6 +642,43 @@
     <button class="btn btn-primary" type="submit" id="authBtn">Sign in</button>
   </form>
   <div class="swap" id="authSwap">New to Revio? <a onclick="openAuth('signup')">Create an account</a></div>
+</div></div>
+
+<!-- ONBOARDING WIZARD -->
+<div class="overlay" id="obOv"><div class="modal glass" style="max-width:480px">
+  <div class="ob-progress"><i id="obd1" class="on"></i><i id="obd2"></i><i id="obd3"></i><i id="obd4"></i></div>
+
+  <div class="ob-step active" data-ob="1">
+    <div class="big-ico">👋</div>
+    <h3>Welcome to Revio AI</h3>
+    <p class="msub">Your autonomous revenue-recovery engine is ready. Three quick steps and your first scan can run.</p>
+    <div class="ob-actions"><button class="btn btn-primary btn-lg" onclick="obGo(2)">Let's set up →</button></div>
+  </div>
+
+  <div class="ob-step" data-ob="2">
+    <div class="big-ico">🏢</div>
+    <h3>Name your workspace</h3>
+    <p class="msub">What business is this for? This appears on your reports.</p>
+    <div class="field"><label>Company / business name</label><input id="obCompany" placeholder="Acme Roofing Co."/></div>
+    <div class="ob-actions"><button class="btn btn-primary btn-lg" onclick="obSaveCompany()">Continue →</button></div>
+  </div>
+
+  <div class="ob-step" data-ob="3">
+    <div class="big-ico">📥</div>
+    <h3>Bring your leads</h3>
+    <p class="msub">Upload a CSV of your leads — the REVIVE agent imports, scores, and diagnoses every one automatically.</p>
+    <div class="ob-actions">
+      <label class="btn btn-primary btn-lg" style="cursor:pointer">⬆ Upload CSV<input type="file" accept=".csv" style="display:none" onchange="obUpload(this)"></label>
+    </div>
+    <a class="ob-skip" onclick="obGo(4)">I'll do this later →</a>
+  </div>
+
+  <div class="ob-step" data-ob="4">
+    <div class="big-ico">🎉</div>
+    <h3>You're live</h3>
+    <p class="msub" id="obDone">Your workspace is ready. The agents run on schedule — the command center shows everything they find.</p>
+    <div class="ob-actions"><button class="btn btn-primary btn-lg" onclick="obFinish()">Open command center →</button></div>
+  </div>
 </div></div>
 
 <div class="toast glass" id="toast"></div>
@@ -763,6 +810,12 @@
       const ro=document.getElementById('revivableOut');
       if(ro) ro.innerHTML = leads.length ? renderLeads(leads) : 'Upload a CSV to import and score your leads.';
       const rep=ov.latest_report;
+      const rp=document.getElementById('revenuePanel');
+      if(rp && rep){
+        rp.style.textAlign='left';
+        rp.innerHTML='<p style="font-family:var(--mono);font-size:12px;color:var(--dim);margin-bottom:12px">DAILY AI EXECUTIVE REPORT · '+String(rep.generated_at).slice(0,10)+'</p>'+
+          '<div style="white-space:pre-wrap;font-size:14px;color:var(--text);line-height:1.6">'+esc(rep.report_content)+'</div>';
+      }
       setTxt('dashStatus','live · '+ov.total_leads+' leads'+(rep?' · report '+String(rep.generated_at).slice(0,10):''));
     }catch(e){
       setTxt('dashStatus','offline — backend not reachable');
@@ -813,10 +866,44 @@
       const d=await r.json().catch(()=>({}));
       if(!r.ok){ toast(d.detail||('Sign-in failed ('+r.status+')')); return; }
       AUTH_TOKEN=d.access_token; localStorage.setItem('revio_token',AUTH_TOKEN); localStorage.setItem('revio_email',d.email||email);
-      await checkSession(); closeAuth(); launchApp();
-      toast(authMode==='signup'?'Account created ✓':'Signed in ✓');
+      await checkSession(); closeAuth();
+      if(authMode==='signup'){ openOnboarding(); toast('Account created ✓'); }
+      else { launchApp(); toast('Signed in ✓'); }
     }catch(err){ toast('Could not reach the server — is the backend live?'); }
   }
+
+  /* ── Onboarding wizard ── */
+  const obOv=document.getElementById('obOv');
+  function openOnboarding(){ obOv.classList.add('open'); obGo(1); }
+  function obGo(n){
+    document.querySelectorAll('.ob-step').forEach(s=>s.classList.toggle('active',s.dataset.ob==String(n)));
+    for(let i=1;i<=4;i++){const d=document.getElementById('obd'+i);if(d)d.classList.toggle('on',i<=n);}
+  }
+  async function obSaveCompany(){
+    const name=document.getElementById('obCompany').value.trim();
+    if(!name){ toast('Enter your company name'); return; }
+    try{
+      const headers=await authHeaders({'Content-Type':'application/json'});
+      const r=await fetch(API_BASE+'/api/v1/auth/onboarding',{method:'POST',headers,body:JSON.stringify({company:name})});
+      if(!r.ok){const d=await r.json().catch(()=>({}));toast(d.detail||'Could not save');return}
+      obGo(3);
+    }catch(e){ toast('Could not reach the server'); }
+  }
+  async function obUpload(input){
+    const file=input.files[0]; if(!file) return;
+    toast('Importing '+file.name+'…');
+    const fd=new FormData(); fd.append('file',file);
+    try{
+      const headers=await authHeaders();
+      const r=await fetch(API_BASE+'/api/v1/upload/csv',{method:'POST',headers,body:fd});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok){ toast(d.detail||('Upload failed ('+r.status+')')); return; }
+      const done=document.getElementById('obDone');
+      if(done) done.textContent='Imported '+d.imported_count+' leads — the AI pipeline is analyzing them now. Results land in your command center.';
+      obGo(4);
+    }catch(e){ toast('Upload failed — is the backend live?'); }
+  }
+  function obFinish(){ obOv.classList.remove('open'); launchApp(); }
 
   let tt;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2800)}
 </script>

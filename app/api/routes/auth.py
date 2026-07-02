@@ -7,11 +7,12 @@ JWT used as `Authorization: Bearer <token>` for the rest of /api/v1.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.rate_limit import limiter
 from app.core.security import (
     create_access_token,
     get_current_user,
@@ -45,7 +46,8 @@ class TokenOut(BaseModel):
 
 
 @router.post("/register", response_model=TokenOut)
-async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def register(request: Request, body: RegisterIn, db: AsyncSession = Depends(get_db)):
     if len(body.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
     email = body.email.strip().lower()
@@ -86,7 +88,8 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenOut)
-async def login(body: LoginIn, db: AsyncSession = Depends(get_db)):
+@limiter.limit("15/minute")
+async def login(request: Request, body: LoginIn, db: AsyncSession = Depends(get_db)):
     user = (await db.execute(select(User).where(User.email == body.email.strip().lower()))).scalar_one_or_none()
     if not user or not user.hashed_password or not verify_password(body.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -95,9 +98,34 @@ async def login(body: LoginIn, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/me")
-async def me(user: User = Depends(get_current_user)):
+async def me(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    org = await db.get(Organization, user.organization_id) if user.organization_id else None
     return {
         "id": str(user.id), "email": user.email, "name": user.name,
         "organization_id": str(user.organization_id or ""),
         "subscription_status": user.subscription_status,
+        "company": org.company_name if org else None,
+        "onboarded": bool(org and not org.company_name.endswith(" workspace")),
     }
+
+
+class OnboardingIn(BaseModel):
+    company: str
+
+
+@router.post("/onboarding")
+async def complete_onboarding(body: OnboardingIn,
+                              user: User = Depends(get_current_user),
+                              db: AsyncSession = Depends(get_db)):
+    """Onboarding step: set the real company name on the user's organization."""
+    if not user.organization_id:
+        raise HTTPException(400, "No organization")
+    org = await db.get(Organization, user.organization_id)
+    if not org:
+        raise HTTPException(404, "Organization not found")
+    name = body.company.strip()
+    if not name:
+        raise HTTPException(400, "Company name required")
+    org.company_name = name[:255]
+    await db.commit()
+    return {"organization_id": str(org.id), "company": org.company_name}
