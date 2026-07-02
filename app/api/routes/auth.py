@@ -46,14 +46,24 @@ class TokenOut(BaseModel):
 
 @router.post("/register", response_model=TokenOut)
 async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
-    existing = (await db.execute(select(User).where(User.email == body.email))).scalar_one_or_none()
-    if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
     if len(body.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    email = body.email.strip().lower()
+    existing = (await db.execute(select(User).where(User.email == email))).scalar_one_or_none()
+    if existing:
+        if not existing.hashed_password:
+            # Account was auto-provisioned by a Whop payment — claim it now.
+            existing.hashed_password = hash_password(body.password)
+            if body.name:
+                existing.name = body.name
+            await db.commit()
+            return TokenOut(access_token=create_access_token(existing.id),
+                            organization_id=str(existing.organization_id or ""),
+                            email=existing.email)
+        raise HTTPException(status_code=400, detail="Email already registered")
 
     org = Organization(
-        company_name=body.company or f"{body.email.split('@')[0]} workspace",
+        company_name=body.company or f"{email.split('@')[0]} workspace",
         agents_enabled=True,
         auto_send_enabled=False,   # compliance: off by default
     )
@@ -61,8 +71,8 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
     await db.flush()
 
     user = User(
-        email=body.email,
-        name=body.name or body.email.split("@")[0],
+        email=email,
+        name=body.name or email.split("@")[0],
         hashed_password=hash_password(body.password),
         organization_id=org.id,
         subscription_status="trialing",
@@ -77,7 +87,7 @@ async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login", response_model=TokenOut)
 async def login(body: LoginIn, db: AsyncSession = Depends(get_db)):
-    user = (await db.execute(select(User).where(User.email == body.email))).scalar_one_or_none()
+    user = (await db.execute(select(User).where(User.email == body.email.strip().lower()))).scalar_one_or_none()
     if not user or not user.hashed_password or not verify_password(body.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     return TokenOut(access_token=create_access_token(user.id),

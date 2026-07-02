@@ -18,6 +18,85 @@ settings = get_settings()
 
 stripe_router = APIRouter(prefix="/stripe", tags=["Stripe Webhooks"])
 crm_webhook_router = APIRouter(prefix="/crm/webhooks", tags=["CRM Webhooks"])
+whop_router = APIRouter(prefix="/whop", tags=["Whop Webhooks"])
+
+_WHOP_GRANT = {"membership.went_valid", "membership_went_valid", "membership.created",
+               "payment.succeeded", "payment_succeeded"}
+_WHOP_REVOKE = {"membership.went_invalid", "membership_went_invalid",
+                "membership.cancelled", "membership.expired"}
+
+
+def _verify_whop_signature(body: bytes, signature: str) -> bool:
+    if not settings.whop_webhook_secret:
+        return True   # not configured (dev) — accept
+    expected = hmac.new(settings.whop_webhook_secret.encode(), body, hashlib.sha256).hexdigest()
+    got = (signature or "").split(",")[-1].replace("sha256=", "").strip()
+    return hmac.compare_digest(expected, got)
+
+
+@whop_router.post("/webhook")
+async def whop_webhook(request: Request):
+    """Whop payment → automatic provisioning.
+
+    On a valid membership/payment: activate the user with that email, creating
+    the account + organization if they haven't registered yet (they later
+    'claim' it by signing up with the same email — see /auth/register).
+    """
+    import json as _json
+
+    from app.db.models.organization import Organization
+    from app.db.models.user import User
+
+    body = await request.body()
+    signature = (request.headers.get("x-whop-signature")
+                 or request.headers.get("whop-signature")
+                 or request.headers.get("x-whop-webhook-signature") or "")
+    if not _verify_whop_signature(body, signature):
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
+
+    try:
+        event = _json.loads(body or b"{}")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid JSON") from exc
+
+    etype = str(event.get("action") or event.get("type") or "")
+    data = event.get("data") or event
+    email = (data.get("email") or data.get("user_email")
+             or (data.get("user") or {}).get("email") or "").strip().lower()
+    if not email:
+        logger.warning("Whop webhook %s without an email; ignoring", etype)
+        return {"received": True, "provisioned": False}
+
+    granted = etype in _WHOP_GRANT
+    revoked = etype in _WHOP_REVOKE
+    if not (granted or revoked):
+        return {"received": True, "provisioned": False, "event": etype}
+
+    db = SyncSessionLocal()
+    try:
+        user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
+        if granted:
+            if user is None:
+                org = Organization(company_name=f"{email.split('@')[0]} workspace",
+                                   agents_enabled=True, auto_send_enabled=False)
+                db.add(org)
+                db.flush()
+                user = User(email=email, name=email.split("@")[0],
+                            hashed_password="",             # claimed at first sign-up
+                            organization_id=org.id,
+                            subscription_status="active")
+                db.add(user)
+            else:
+                user.subscription_status = "active"
+            logger.info("Whop: activated %s (%s)", email, etype)
+        else:
+            if user is not None:
+                user.subscription_status = "canceled"
+                logger.info("Whop: revoked %s (%s)", email, etype)
+        db.commit()
+        return {"received": True, "provisioned": granted, "revoked": revoked}
+    finally:
+        db.close()
 
 
 @stripe_router.post("/webhook")

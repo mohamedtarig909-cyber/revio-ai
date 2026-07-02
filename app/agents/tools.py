@@ -129,22 +129,24 @@ async def retrieve_similar_historical_cases(
     from app.models.intelligence import HistoricalCase
 
     try:
-        # pgvector cosine distance — requires pgvector extension installed
-        vec_str = "[" + ",".join(str(v) for v in embedding) + "]"
-        filters = ""
-        if industry:
-            filters = f"AND industry = '{industry.replace(chr(39), '')}'"
+        # pgvector cosine distance — fully parameterized (no string interpolation).
+        from sqlalchemy import text as sa_text
 
-        raw_sql = f"""
+        vec_str = "[" + ",".join(str(float(v)) for v in embedding) + "]"
+        filters = "AND industry = :industry" if industry else ""
+        raw_sql = sa_text(f"""
             SELECT id, case_summary, winning_strategy, outcome_positive,
                    industry, deal_value, primary_objection, channel_used,
-                   1 - (embedding <=> '{vec_str}'::vector) AS similarity
+                   1 - (embedding <=> CAST(:vec AS vector)) AS similarity
             FROM historical_cases
             WHERE 1=1 {filters}
-            ORDER BY embedding <=> '{vec_str}'::vector
-            LIMIT {limit}
-        """
-        result = await db.execute(raw_sql)  # type: ignore[arg-type]
+            ORDER BY embedding <=> CAST(:vec AS vector)
+            LIMIT :limit
+        """)
+        params: dict[str, Any] = {"vec": vec_str, "limit": int(limit)}
+        if industry:
+            params["industry"] = industry
+        result = await db.execute(raw_sql, params)
         rows = result.mappings().all()
         return [dict(r) for r in rows]
 

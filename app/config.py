@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     sentry_dsn: str = ""
 
     admin_token: str = ""   # gate for the /api/v1/admin control panel
+    whop_webhook_secret: str = ""   # verify Whop webhook signatures
 
     revive_inactivity_days: int = 30
     pulse_revenue_risk_threshold: float = 50000.0

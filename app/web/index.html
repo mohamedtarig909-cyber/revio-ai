@@ -724,61 +724,65 @@
     return h;
   }
   function renderLeads(leads){
-    if(!leads||!leads.length)return '<div style="color:var(--dim)">No leads scored yet.</div>';
-    return '<div class="glass" style="padding:8px;border-radius:var(--r);overflow-x:auto"><table class="cmp" style="min-width:520px"><tr><th>Lead</th><th>Score</th><th>Recoverable</th><th>Cause</th><th>Window</th></tr>'+
-      leads.map(L=>'<tr><td class="hi">'+esc(L.id)+'</td><td>'+L.dead_lead_score+'/100</td><td>'+fmtUSD(L.expected_value)+'</td><td>'+esc(L.objection)+'</td><td>'+L.best_window_days+'d</td></tr>').join('')+
+    if(!leads||!leads.length)return '<div style="color:var(--dim)">No leads yet.</div>';
+    return '<div class="glass" style="padding:8px;border-radius:var(--r);overflow-x:auto"><table class="cmp" style="min-width:520px"><tr><th>Lead</th><th>Company</th><th>Deal value</th><th>Status</th><th>Priority</th></tr>'+
+      leads.map(L=>'<tr><td class="hi">'+esc(L.full_name||L.email||L.id)+'</td><td>'+esc(L.company||'—')+'</td><td>'+fmtUSD(L.deal_value)+'</td><td>'+esc(L.lead_status)+'</td><td>'+(L.priority_score!=null?L.priority_score:'—')+'</td></tr>').join('')+
       '</table></div>';
   }
   function uploadPrompt(){
-    return '<div class="action glass"><div class="ico" style="background:rgba(45,212,191,.15)">⬆</div><div class="body"><h4>Upload your dead-lead list to begin</h4><p>Drop in a CSV (Name, Email, Deal Value, Last Contact, Lost Reason). Revio scores every lead and ranks your recoverable revenue — your data only, nothing sample.</p></div><button class="btn btn-primary" onclick="runScan()">Upload CSV</button></div>';
+    return '<div class="action glass"><div class="ico" style="background:rgba(45,212,191,.15)">⬆</div><div class="body"><h4>Upload your dead-lead list to begin</h4><p>Drop in a CSV of your leads. Revio imports them, the REVIVE agent scores each one, and your recoverable revenue appears here — your data only, nothing sample.</p></div><button class="btn btn-primary" onclick="runScan()">Upload CSV</button></div>';
   }
   function runScan(){const i=document.getElementById('csvFile');if(i)i.click()}
   async function loadDashboard(){
     setTxt('dashStatus','loading…');
+    if(!AUTH_TOKEN){ setTxt('dashStatus','sign in to load your workspace'); const ta=document.getElementById('topActions'); if(ta)ta.innerHTML=uploadPrompt(); return; }
     try{
       const headers=await authHeaders();
-      const engR=await fetch(API_BASE+'/v1/intelligence/engines',{headers});
-      if(!engR.ok)throw new Error(engR.status);
-      const eng=(await engR.json()).engines||[];
-      setTxt('kEngines',eng.filter(e=>e.implemented).length+'/'+eng.length);
-      document.getElementById('engineStrip').innerHTML=eng.map(e=>{
-        const col=e.status==='live'?'var(--signal)':e.status==='partial'?'var(--gold)':'var(--dim)';
-        return '<div class="kpi glass"><div class="k">'+esc(e.title)+'</div><div class="v" style="font-size:15px;color:'+col+'">'+e.status+'</div><div class="s">'+e.absorbs.length+' modules</div></div>';
-      }).join('');
-      setTxt('dashStatus','live · upload your leads to run a scan');
+      const [ovR,leadsR]=await Promise.all([
+        fetch(API_BASE+'/api/v1/dashboard/overview',{headers}),
+        fetch(API_BASE+'/api/v1/leads?page=1&page_size=25',{headers})
+      ]);
+      if(ovR.status===401){setTxt('dashStatus','session expired — sign in again');return}
+      if(!ovR.ok)throw new Error('overview '+ovR.status);
+      const ov=await ovR.json();
+      setTxt('kScore',ov.pipeline_health_score!=null?Math.round(+ov.pipeline_health_score):'—');
+      setTxt('kRecover',fmtUSD(ov.revenue_at_risk));
+      setTxt('kRevivable',ov.dormant_leads);
+      setTxt('kEngines',(ov.campaigns_sent_24h||0)+' / '+(ov.responses_24h||0));
+      const es=document.getElementById('engineStrip');
+      if(es) es.innerHTML='<div class="kpi glass"><div class="k">Total leads</div><div class="v" style="font-size:22px">'+ov.total_leads+'</div></div>'+
+        '<div class="kpi glass"><div class="k">Reactivated</div><div class="v t" style="font-size:22px">'+ov.reactivated_leads+'</div></div>'+
+        '<div class="kpi glass"><div class="k">Campaigns 24h</div><div class="v" style="font-size:22px">'+ov.campaigns_sent_24h+'</div></div>'+
+        '<div class="kpi glass"><div class="k">Replies 24h</div><div class="v g" style="font-size:22px">'+ov.responses_24h+'</div></div>';
+      let leads=[];
+      if(leadsR.ok){const ld=await leadsR.json();leads=ld.items||[];}
+      const ta=document.getElementById('topActions');
+      if(ta) ta.innerHTML = leads.length ? leads.slice(0,5).map(L=>
+        '<div class="action glass"><div class="ico" style="background:rgba(45,212,191,.15)">↻</div><div class="body"><h4>'+esc(L.full_name||L.email)+' · '+esc(L.company||'')+'</h4><p>Status: '+esc(L.lead_status)+' · deal '+fmtUSD(L.deal_value)+'</p><div class="meta"><span>priority <b>'+(L.priority_score!=null?L.priority_score:'—')+'</b></span></div></div></div>'
+      ).join('') : uploadPrompt();
+      const ro=document.getElementById('revivableOut');
+      if(ro) ro.innerHTML = leads.length ? renderLeads(leads) : 'Upload a CSV to import and score your leads.';
+      const rep=ov.latest_report;
+      setTxt('dashStatus','live · '+ov.total_leads+' leads'+(rep?' · report '+String(rep.generated_at).slice(0,10):''));
     }catch(e){
-      setTxt('kEngines','—');
-      setTxt('dashStatus','offline — deploy or run the server to go live');
-    }
-    if(!clientData){
-      setTxt('kScore','—');setTxt('kRecover','—');setTxt('kRevivable','0');
-      const ta=document.getElementById('topActions');if(ta)ta.innerHTML=uploadPrompt();
-      const ro=document.getElementById('revivableOut');if(ro)ro.innerHTML='Upload a CSV to see ranked revivable leads.';
+      setTxt('dashStatus','offline — backend not reachable');
     }
   }
   async function uploadCsv(input){
     const file=input.files[0];if(!file)return;
-    toast('Scoring '+file.name+'…');
+    if(!AUTH_TOKEN){toast('Sign in first');return}
+    toast('Importing '+file.name+'…');
     const fd=new FormData();fd.append('file',file);
     try{
       const headers=await authHeaders();
-      const r=await fetch(API_BASE+'/v1/ingest/csv?industry=real_estate',{method:'POST',headers,body:fd});
+      const r=await fetch(API_BASE+'/api/v1/upload/csv',{method:'POST',headers,body:fd});
       if(r.status===401){toast('Please sign in first');return}
-      if(!r.ok)throw new Error(r.status);
-      const d=await r.json();clientData=d;
-      const h=d.pipeline_health||{};
-      setTxt('kScore',h.score!=null?h.score:'—');
-      setTxt('kRecover',fmtUSD(d.total_recoverable));
-      setTxt('kRevivable',d.leads_parsed);
-      const leads=d.scored_leads||[];
-      document.getElementById('topActions').innerHTML = leads.slice(0,5).map(L=>
-        '<div class="action glass"><div class="ico" style="background:rgba(45,212,191,.15)">↻</div><div class="body"><h4>'+esc(L.id)+' · score '+L.dead_lead_score+'/100</h4><p>Cause: '+esc(L.objection)+' · best window in '+L.best_window_days+' days.</p><div class="meta"><span>recoverable <b>'+fmtUSD(L.expected_value)+'</b></span></div></div></div>'
-      ).join('')||uploadPrompt();
-      document.getElementById('revivableOut').innerHTML=
-        '<p style="margin:0 0 12px;color:var(--muted)">Parsed <b style="color:var(--text)">'+d.leads_parsed+'</b> leads · recoverable <b style="color:var(--signal)">'+fmtUSD(d.total_recoverable)+'</b> · health '+(h.score)+'/100</p>'+renderLeads(leads);
-      setTxt('dashStatus','live · '+d.leads_parsed+' leads scored');
-      toast('Scored '+d.leads_parsed+' leads ✓');
-    }catch(e){toast('Upload failed — sign in and make sure the system is live')}
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok){toast(d.detail||('Upload failed ('+r.status+')'));return}
+      toast('Imported '+d.imported_count+' leads ✓ — AI analysis queued');
+      if(d.errors&&d.errors.length)console.warn('CSV row errors:',d.errors);
+      setTimeout(loadDashboard,1500);   // refresh once import lands
+    }catch(e){toast('Upload failed — is the backend live?')}
   }
 
   /* paywall */
