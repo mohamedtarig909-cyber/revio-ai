@@ -15,5 +15,6 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 8000
 
-# Host platforms (Render/Railway) inject $PORT; default to 8000 locally.
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Run DB migrations, then start. $PORT injected by host; 8000 locally.
+# Migrations must not block startup if the DB is briefly unreachable.
+CMD ["sh", "-c", "alembic upgrade head || echo 'WARN: migrations failed, starting anyway'; uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
