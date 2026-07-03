@@ -31,7 +31,11 @@ async def upload_csv(
     db = SyncSessionLocal()
     try:
         result = CSVImportService(db).import_csv(current_user.organization_id, content)
-        run_orchestrator_pipeline_task.delay(str(current_user.organization_id))
+        try:
+            # Queue the AI pipeline if a broker (Redis/Celery) is available.
+            run_orchestrator_pipeline_task.delay(str(current_user.organization_id))
+        except Exception:  # noqa: BLE001 — no broker: import still succeeds
+            pass  # agents can be triggered manually from /admin
         return CSVUploadResponse(**result)
     finally:
         db.close()

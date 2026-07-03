@@ -1,3 +1,13 @@
+---
+title: Revio AI
+emoji: 🟢
+colorFrom: green
+colorTo: purple
+sdk: docker
+app_port: 8000
+pinned: false
+---
+
 # Revio AI Backend
 
 Autonomous revenue intelligence platform — event-driven multi-agent operating system for revenue operations.
