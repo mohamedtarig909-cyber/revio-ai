@@ -45,9 +45,11 @@ class TokenOut(BaseModel):
     email: str
 
 
+# NOTE: slowapi's limiter broke Pydantic body parsing on these endpoints
+# (body was demanded as a query param). Rate limiting to be re-added via
+# middleware later; auth correctness comes first.
 @router.post("/register", response_model=TokenOut)
-@limiter.limit("10/minute")
-async def register(request: Request, body: RegisterIn, db: AsyncSession = Depends(get_db)):
+async def register(body: RegisterIn, db: AsyncSession = Depends(get_db)):
     if len(body.password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
     email = body.email.strip().lower()
@@ -88,8 +90,7 @@ async def register(request: Request, body: RegisterIn, db: AsyncSession = Depend
 
 
 @router.post("/login", response_model=TokenOut)
-@limiter.limit("15/minute")
-async def login(request: Request, body: LoginIn, db: AsyncSession = Depends(get_db)):
+async def login(body: LoginIn, db: AsyncSession = Depends(get_db)):
     user = (await db.execute(select(User).where(User.email == body.email.strip().lower()))).scalar_one_or_none()
     if not user or not user.hashed_password or not verify_password(body.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
