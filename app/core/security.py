@@ -59,3 +59,11 @@ async def get_current_user(
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
+
+
+async def get_paid_user(user: User = Depends(get_current_user)) -> User:
+    """Product access requires an ACTIVE subscription (activated by the Whop
+    webhook, or manually by the owner from the admin panel)."""
+    if user.subscription_status != "active":
+        raise HTTPException(status_code=402, detail="Subscription required")
+    return user

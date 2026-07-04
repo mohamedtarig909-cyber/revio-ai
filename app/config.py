@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     sentry_dsn: str = ""
 
     admin_token: str = ""   # gate for the /api/v1/admin control panel
+    google_client_id: str = ""   # Google OAuth web client id (Sign in with Google)
     whop_webhook_secret: str = ""   # verify Whop webhook signatures
 
     revive_inactivity_days: int = 30

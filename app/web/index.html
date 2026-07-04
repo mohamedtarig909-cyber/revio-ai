@@ -579,7 +579,10 @@
       <div class="panel active" data-panel="center">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
           <div><h2>Command center</h2><p style="color:var(--dim);font-family:var(--mono);font-size:13px" id="dashStatus">live · powered by 6 engines</p></div>
-          <button class="btn btn-primary" onclick="runScan()">⬆ Upload &amp; scan</button>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="runScan()">⬆ Upload CSV</button>
+            <button class="btn btn-primary" onclick="runPipeline()">▶ Run AI scan</button>
+          </div>
         </div>
         <div class="cards4">
           <div class="kpi glass"><div class="k">Pipeline health</div><div class="v t" id="kScore">—</div><div class="s">0–100</div></div>
@@ -622,7 +625,9 @@
     <div class="pw pop" data-plan="growth" onclick="checkout(this)"><div class="t">Growth</div><div class="a">$399<small>/mo</small></div><p>15,000 leads · multi-channel</p></div>
     <div class="pw" data-plan="scale" onclick="checkout(this)"><div class="t">Scale</div><div class="a">$899<small>/mo</small></div><p>75,000 leads · all engines</p></div>
   </div>
-  <div class="swap">Already subscribed? <a onclick="closePaywall();openAuth('signin')">Sign in to enter →</a></div>
+  <p class="msub" style="margin:14px 0 4px"><b style="color:var(--gold)">Important:</b> pay with the <b>same email</b> you signed up with — access unlocks automatically.</p>
+  <div class="ob-actions"><button class="btn btn-primary" onclick="recheckAccess()">I've paid — check my access ✓</button></div>
+  <div class="swap">Not signed in yet? <a onclick="closePaywall();openAuth('signin')">Sign in →</a></div>
 </div></div>
 
 <!-- AUTH -->
@@ -630,7 +635,8 @@
   <button class="xclose" onclick="closeAuth()">×</button>
   <h3 id="authTitle">Welcome back</h3>
   <p class="msub" id="authSub">Sign in to your Revio AI command center</p>
-  <button class="btn gbtn" onclick="googleAuth()">
+  <div id="gsiBtn" style="display:flex;justify-content:center;margin-bottom:16px"></div>
+  <button class="btn gbtn" id="gFallback" onclick="googleAuth()">
     <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38z"/></svg>
     Continue with Google
   </button>
@@ -646,12 +652,12 @@
 
 <!-- ONBOARDING WIZARD -->
 <div class="overlay" id="obOv"><div class="modal glass" style="max-width:480px">
-  <div class="ob-progress"><i id="obd1" class="on"></i><i id="obd2"></i><i id="obd3"></i><i id="obd4"></i></div>
+  <div class="ob-progress"><i id="obd1" class="on"></i><i id="obd2"></i><i id="obd3"></i><i id="obd4"></i><i id="obd5"></i></div>
 
   <div class="ob-step active" data-ob="1">
     <div class="big-ico">👋</div>
     <h3>Welcome to Revio AI</h3>
-    <p class="msub">Your autonomous revenue-recovery engine is ready. Three quick steps and your first scan can run.</p>
+    <p class="msub">Your autonomous revenue-recovery engine is ready. A few quick steps and your first scan can run.</p>
     <div class="ob-actions"><button class="btn btn-primary btn-lg" onclick="obGo(2)">Let's set up →</button></div>
   </div>
 
@@ -664,19 +670,31 @@
   </div>
 
   <div class="ob-step" data-ob="3">
+    <div class="big-ico">🔓</div>
+    <h3>Choose your plan</h3>
+    <p class="msub">Unlock your workspace — secure checkout via Whop.<br><b style="color:var(--gold)">Important:</b> pay with the <b>same email</b> you signed up with.</p>
+    <div class="paywall-plans">
+      <div class="pw" data-plan="starter" onclick="checkout(this)"><div class="t">Starter</div><div class="a">$149<small>/mo</small></div><p>2,500 leads · scoring + email</p></div>
+      <div class="pw pop" data-plan="growth" onclick="checkout(this)"><div class="t">Growth</div><div class="a">$399<small>/mo</small></div><p>15,000 leads · multi-channel</p></div>
+      <div class="pw" data-plan="scale" onclick="checkout(this)"><div class="t">Scale</div><div class="a">$899<small>/mo</small></div><p>75,000 leads · all engines</p></div>
+    </div>
+    <div class="ob-actions"><button class="btn btn-primary btn-lg" onclick="obVerifyPaid()">I've paid — verify my access ✓</button></div>
+  </div>
+
+  <div class="ob-step" data-ob="4">
     <div class="big-ico">📥</div>
     <h3>Bring your leads</h3>
     <p class="msub">Upload a CSV of your leads — the REVIVE agent imports, scores, and diagnoses every one automatically.</p>
     <div class="ob-actions">
       <label class="btn btn-primary btn-lg" style="cursor:pointer">⬆ Upload CSV<input type="file" accept=".csv" style="display:none" onchange="obUpload(this)"></label>
     </div>
-    <a class="ob-skip" onclick="obGo(4)">I'll do this later →</a>
+    <a class="ob-skip" onclick="obGo(5)">I'll do this later →</a>
   </div>
 
-  <div class="ob-step" data-ob="4">
+  <div class="ob-step" data-ob="5">
     <div class="big-ico">🎉</div>
     <h3>You're live</h3>
-    <p class="msub" id="obDone">Your workspace is ready. The agents run on schedule — the command center shows everything they find.</p>
+    <p class="msub" id="obDone">Your workspace is ready. The agents analyze your leads — the command center shows everything they find.</p>
     <div class="ob-actions"><button class="btn btn-primary btn-lg" onclick="obFinish()">Open command center →</button></div>
   </div>
 </div></div>
@@ -698,12 +716,46 @@
     updateAuthUI();
   }
   checkSession();
+
+  /* ── Google Sign-In (real, via backend /auth/google) ── */
+  let GOOGLE_CLIENT_ID='';
+  fetch(AUTH_BASE+'/api/v1/auth/google/config').then(r=>r.json()).then(d=>{
+    GOOGLE_CLIENT_ID=d.client_id||'';
+    if(!GOOGLE_CLIENT_ID) return;                    // not configured → keep fallback button
+    const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true;
+    s.onload=()=>{ try{
+      google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID, callback:onGoogleCred});
+      const slot=document.getElementById('gsiBtn'), fb=document.getElementById('gFallback');
+      if(slot){ google.accounts.id.renderButton(slot,{theme:'outline',size:'large',width:340,text:'continue_with'}); if(fb)fb.style.display='none'; }
+    }catch(e){} };
+    document.head.appendChild(s);
+  }).catch(()=>{});
+  async function onGoogleCred(resp){
+    try{
+      const r=await fetch(AUTH_BASE+'/api/v1/auth/google',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({credential:resp.credential})});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok){ toast(d.detail||'Google sign-in failed'); return; }
+      AUTH_TOKEN=d.access_token; localStorage.setItem('revio_token',AUTH_TOKEN); localStorage.setItem('revio_email',d.email||'');
+      await checkSession(); closeAuth();
+      if(d.created){ openOnboarding(); toast('Welcome ✓'); }
+      else { enterProduct(); toast('Signed in ✓'); }
+    }catch(e){ toast('Could not reach the server'); }
+  }
+
+  /* Gate: dashboard requires an ACTIVE subscription */
+  function isActive(){ return currentUser && currentUser.subscription_status==='active'; }
+  function enterProduct(){ if(isActive()){ launchApp(); } else { paywall(); } }
+  async function recheckAccess(){
+    await checkSession();
+    if(isActive()){ closePaywall(); launchApp(); toast('Access unlocked ✓'); }
+    else toast('Not active yet — pay on Whop with the SAME email you signed up with, then try again');
+  }
   function updateAuthUI(){
     const cta=document.querySelector('.navcta'); if(!cta) return;
     if(currentUser){
       const name=currentUser.name||currentUser.email;
       cta.innerHTML='<span style="color:var(--muted);font-size:13px;font-family:var(--mono);max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</span>'+
-        '<button class="btn btn-ghost" onclick="launchApp()">Command center</button>'+
+        '<button class="btn btn-ghost" onclick="enterProduct()">Command center</button>'+
         '<button class="btn btn-primary" onclick="signOut()">Sign out</button>';
     } else {
       cta.innerHTML='<button class="btn btn-ghost" onclick="openAuth(\'signin\')">Sign in</button>'+
@@ -780,17 +832,49 @@
     return '<div class="action glass"><div class="ico" style="background:rgba(45,212,191,.15)">⬆</div><div class="body"><h4>Upload your dead-lead list to begin</h4><p>Drop in a CSV of your leads. Revio imports them, the REVIVE agent scores each one, and your recoverable revenue appears here — your data only, nothing sample.</p></div><button class="btn btn-primary" onclick="runScan()">Upload CSV</button></div>';
   }
   function runScan(){const i=document.getElementById('csvFile');if(i)i.click()}
+  async function runPipeline(){
+    if(!AUTH_TOKEN){toast('Sign in first');return}
+    try{
+      const headers=await authHeaders({'Content-Type':'application/json'});
+      const r=await fetch(API_BASE+'/api/v1/upload/run-pipeline',{method:'POST',headers});
+      if(r.status===402){paywall();return}
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok){toast(d.detail||('Failed ('+r.status+')'));return}
+      toast('AI scan started — agents are analyzing your leads…');
+      setTxt('dashStatus','AI pipeline running…');
+      setTimeout(loadDashboard,12000);   // refresh once agents have progressed
+    }catch(e){toast('Could not reach the server')}
+  }
   async function loadDashboard(){
     setTxt('dashStatus','loading…');
     if(!AUTH_TOKEN){ setTxt('dashStatus','sign in to load your workspace'); const ta=document.getElementById('topActions'); if(ta)ta.innerHTML=uploadPrompt(); return; }
     try{
       const headers=await authHeaders();
-      const [ovR,leadsR]=await Promise.all([
+      const [ovR,leadsR,campR,healthR,logsR]=await Promise.all([
         fetch(API_BASE+'/api/v1/dashboard/overview',{headers}),
-        fetch(API_BASE+'/api/v1/leads?page=1&page_size=25',{headers})
+        fetch(API_BASE+'/api/v1/leads?page=1&page_size=25',{headers}),
+        fetch(API_BASE+'/api/v1/operations/campaigns',{headers}),
+        fetch(API_BASE+'/api/v1/operations/pipeline/health',{headers}),
+        fetch(API_BASE+'/api/v1/operations/agent/logs',{headers})
       ]);
       if(ovR.status===401){setTxt('dashStatus','session expired — sign in again');return}
+      if(ovR.status===402){backToSite();paywall();return}
       if(!ovR.ok)throw new Error('overview '+ovR.status);
+      /* live panels: revival sequences = drafted campaigns */
+      try{ if(campR.ok){const cs=await campR.json();
+        const el=document.querySelector('[data-panel="sequences"] .empty');
+        if(el&&cs.length){el.style.textAlign='left';el.innerHTML=cs.slice(0,10).map(c=>'<div class="action glass" style="margin-bottom:10px"><div class="body"><h4>'+esc(c.subject_line||c.channel+' message')+'</h4><p>'+esc((c.message_content||'').slice(0,180))+'…</p><div class="meta"><span>channel <b>'+esc(c.channel)+'</b></span><span>status '+esc(c.status)+'</span></div></div></div>').join('');}
+      }}catch(e){}
+      /* decay radar = pipeline health record */
+      try{ if(healthR.ok){const ph=await healthR.json();
+        const el=document.querySelector('[data-panel="decay"] .empty');
+        if(el){el.style.textAlign='left';el.innerHTML='<h4 style="font-family:var(--display);margin-bottom:8px">Pipeline health: '+Math.round(+ph.pipeline_health_score)+'/100</h4><p style="color:var(--muted)">Revenue at risk: <b style="color:var(--rose)">'+fmtUSD(ph.revenue_at_risk)+'</b> · stalled deals: <b style="color:var(--text)">'+ph.stalled_deals_count+'</b></p>'+(ph.conversion_bottlenecks?'<p style="color:var(--muted);margin-top:8px;white-space:pre-wrap">'+esc(ph.conversion_bottlenecks)+'</p>':'');}
+      }}catch(e){}
+      /* outreach panel = live agent activity */
+      try{ if(logsR.ok){const lg=await logsR.json();const items=lg.items||[];
+        const el=document.querySelector('[data-panel="outreach"] .empty');
+        if(el&&items.length){el.style.textAlign='left';el.innerHTML='<h4 style="font-family:var(--display);margin-bottom:10px">Agent activity</h4>'+items.slice(0,12).map(r=>'<div style="display:flex;gap:12px;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border)"><b style="min-width:110px">'+esc(r.agent_name)+'</b><span style="color:'+(r.status==='completed'||r.status==='success'?'var(--signal)':'var(--gold)')+'">'+esc(r.status)+'</span><span style="color:var(--dim);margin-left:auto">'+String(r.started_at).slice(0,19).replace('T',' ')+'</span></div>').join('');}
+      }}catch(e){}
       const ov=await ovR.json();
       setTxt('kScore',ov.pipeline_health_score!=null?Math.round(+ov.pipeline_health_score):'—');
       setTxt('kRecover',fmtUSD(ov.revenue_at_risk));
@@ -868,7 +952,7 @@
       AUTH_TOKEN=d.access_token; localStorage.setItem('revio_token',AUTH_TOKEN); localStorage.setItem('revio_email',d.email||email);
       await checkSession(); closeAuth();
       if(authMode==='signup'){ openOnboarding(); toast('Account created ✓'); }
-      else { launchApp(); toast('Signed in ✓'); }
+      else { enterProduct(); toast('Signed in ✓'); }
     }catch(err){ toast('Could not reach the server — is the backend live?'); }
   }
 
@@ -877,7 +961,12 @@
   function openOnboarding(){ obOv.classList.add('open'); obGo(1); }
   function obGo(n){
     document.querySelectorAll('.ob-step').forEach(s=>s.classList.toggle('active',s.dataset.ob==String(n)));
-    for(let i=1;i<=4;i++){const d=document.getElementById('obd'+i);if(d)d.classList.toggle('on',i<=n);}
+    for(let i=1;i<=5;i++){const d=document.getElementById('obd'+i);if(d)d.classList.toggle('on',i<=n);}
+  }
+  async function obVerifyPaid(){
+    await checkSession();
+    if(isActive()){ obGo(4); toast('Payment verified ✓'); }
+    else toast('Not active yet — complete checkout with the SAME email, then try again (can take ~1 min)');
   }
   async function obSaveCompany(){
     const name=document.getElementById('obCompany').value.trim();
@@ -900,10 +989,10 @@
       if(!r.ok){ toast(d.detail||('Upload failed ('+r.status+')')); return; }
       const done=document.getElementById('obDone');
       if(done) done.textContent='Imported '+d.imported_count+' leads — the AI pipeline is analyzing them now. Results land in your command center.';
-      obGo(4);
+      obGo(5);
     }catch(e){ toast('Upload failed — is the backend live?'); }
   }
-  function obFinish(){ obOv.classList.remove('open'); launchApp(); }
+  function obFinish(){ obOv.classList.remove('open'); enterProduct(); }
 
   let tt;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2800)}
 </script>

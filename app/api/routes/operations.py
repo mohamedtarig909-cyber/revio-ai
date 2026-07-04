@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rate_limit import limiter
-from app.core.security import get_current_user
+from app.core.security import get_paid_user
 from app.db.models.agent_run import AgentRun
 from app.db.models.campaign import Campaign, CampaignChannel, CampaignStatus
 from app.db.models.daily_report import DailyReport
@@ -33,7 +33,7 @@ router = APIRouter(tags=["Campaigns", "Reports", "Pipeline", "Agents"])
 async def list_campaigns(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_paid_user),
 ):
     if not current_user.organization_id:
         raise HTTPException(status_code=400, detail="No organization")
@@ -53,7 +53,7 @@ async def send_campaign(
     request: Request,
     payload: CampaignSendRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_paid_user),
 ):
     if not current_user.organization_id:
         raise HTTPException(status_code=400, detail="No organization")
@@ -112,7 +112,7 @@ async def list_daily_reports(
     request: Request,
     limit: int = Query(30, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_paid_user),
 ):
     if not current_user.organization_id:
         raise HTTPException(status_code=400, detail="No organization")
@@ -131,7 +131,7 @@ async def list_daily_reports(
 async def get_pipeline_health(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_paid_user),
 ):
     if not current_user.organization_id:
         raise HTTPException(status_code=400, detail="No organization")
@@ -155,7 +155,7 @@ async def get_agent_logs(
     agent_name: str | None = None,
     limit: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_paid_user),
 ):
     if not current_user.organization_id:
         raise HTTPException(status_code=400, detail="No organization")

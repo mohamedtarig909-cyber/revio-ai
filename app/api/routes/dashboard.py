@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.rate_limit import limiter
-from app.core.security import get_current_user
+from app.core.security import get_paid_user
 from app.db.models.campaign import Campaign, CampaignStatus
 from app.db.models.daily_report import DailyReport
 from app.db.models.lead import Lead, LeadStatus
@@ -37,7 +37,7 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 async def get_dashboard_overview(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_paid_user),
 ):
     if not current_user.organization_id:
         raise HTTPException(status_code=400, detail="User not associated with an organization")
