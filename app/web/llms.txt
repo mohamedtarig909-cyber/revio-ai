@@ -1,0 +1,30 @@
+# Revio AI
+
+> Revio AI is an AI lead-reactivation (database reactivation) platform. It scores a business's dead/cold leads 0–100, diagnoses why each lead went quiet (no follow-up, bad timing, price objection, chose competitor, unqualified), predicts the best re-contact window, and drafts personalized revival campaigns — with human approval before anything sends.
+
+## What it does
+- Dead Lead Score: deterministic 0–100 scoring (intent × engagement × objection type × time decay × sentiment × conversion probability) — computed in code, not guessed by an LLM
+- Why-it-died diagnosis per lead, in plain language
+- AI-drafted re-engagement messages, tuned to industry and cause of death
+- Best-window timing (e.g. pricing-objection leads convert best ~28–35 days after going cold)
+- Pipeline health monitoring, revenue-leak detection in dollars, daily executive report
+- Six engines: Resurrection, Pipeline Monitor, Outreach (drafts, human-approved), Forensics & Coaching, Signals & Opportunity, Memory & Reporting
+
+## Who it's for
+SMB sales-led businesses with large lead databases they paid for and abandoned: real estate, solar, insurance, mortgage, home services, agencies.
+
+## Pricing (USD/month)
+- Starter $149 — up to 2,500 leads, scoring + diagnosis + email drafts
+- Growth $399 — up to 15,000 leads, multi-channel, best-window timing
+- Scale $899 — up to 75,000 leads, all engines, benchmarks
+14-day trial, cancel anytime. Billing via Whop.
+
+## Compliance
+Consent tracking, suppression/opt-out honoring, human approval by default (CAN-SPAM / TCPA / GDPR aware). No auto-sending without explicit opt-in.
+
+## Compare
+https://revioai.site/compare — honest comparison vs Instantly, Apollo, lemlist, database-reactivation agencies, and hiring an SDR.
+
+## Links
+- Website: https://revioai.site
+- App: https://revioai.site (sign in)

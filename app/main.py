@@ -59,6 +59,22 @@ async def admin_panel():
     return FileResponse(WEB_DIR / "admin.html")
 
 
+@app.get("/compare", include_in_schema=False)
+async def compare_page():
+    """Honest comparison page vs alternatives (AEO / SEO)."""
+    return FileResponse(WEB_DIR / "compare.html")
+
+
+@app.get("/llms.txt", include_in_schema=False)
+async def llms_txt():
+    return FileResponse(WEB_DIR / "llms.txt", media_type="text/plain")
+
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    return FileResponse(WEB_DIR / "robots.txt", media_type="text/plain")
+
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "version": __version__, "service": "revio-ai-api"}
