@@ -570,7 +570,7 @@
       <form class="fnews" onsubmit="event.preventDefault();toast('Subscribed ✓')"><input type="email" placeholder="you@company.com" required/><button class="btn btn-primary" type="submit">Join</button></form>
     </div>
     <div class="fcol"><h5>Product</h5><a href="#features">Features</a><a href="#calculator">ROI calculator</a><a href="#pricing">Pricing</a><a href="/compare">Compare alternatives</a><a onclick="goCheckout()" style="cursor:pointer">Command center</a></div>
-    <div class="fcol"><h5>Company</h5><a href="#how">How it works</a><a href="#faq">FAQ</a><a onclick="openAuth('signin')" style="cursor:pointer">Sign in</a><a href="#">Contact</a></div>
+    <div class="fcol"><h5>Company</h5><a href="#how">How it works</a><a href="#faq">FAQ</a><a href="/database-reactivation">Database reactivation guide</a><a onclick="openAuth('signin')" style="cursor:pointer">Sign in</a></div>
     <div class="fcol"><h5>Legal</h5><a href="#">Privacy policy</a><a href="#">Terms of service</a><a href="#">Compliance</a><a href="#">Data deletion</a><a href="/admin" style="opacity:.55" title="Operator control panel">Operator</a></div>
   </div>
   <div class="fbar">
@@ -789,7 +789,11 @@
   function signOut(){AUTH_TOKEN='';currentUser=null;localStorage.removeItem('revio_token');localStorage.removeItem('revio_email');updateAuthUI();backToSite();toast('Signed out')}
 
   /* ── Whop checkout links ── */
-  const WHOP_LINKS={starter:"https://whop.com/revio-ai/1-a6-15a9/",growth:"https://whop.com/revio-ai/2-f7-5aa7/",scale:"https://whop.com/revio-ai/3-b5/"};
+  const WHOP_LINKS={
+    starter:"https://whop.com/checkout/16UCWhxQ6WRqvDjDLb-EbGj-E0X3-6AZ7-4asKUb5F4Mcl/",
+    growth:"https://whop.com/checkout/plan_4YAnqols3fF3B",
+    scale:"https://whop.com/checkout/plan_680NtBY6IHLI2"
+  };
   function checkout(el){const plan=el.dataset.plan,url=WHOP_LINKS[plan];if(url){window.location.href=url}else{toast('Checkout link for "'+plan+'" not set')}}
   function goCheckout(plan){const url=WHOP_LINKS[plan||'growth']||WHOP_LINKS.growth;if(url){window.location.href=url}else{toast('Checkout link not set')}}
 

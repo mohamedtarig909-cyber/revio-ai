@@ -75,6 +75,17 @@ async def robots_txt():
     return FileResponse(WEB_DIR / "robots.txt", media_type="text/plain")
 
 
+@app.get("/database-reactivation", include_in_schema=False)
+async def guide_page():
+    """SEO pillar page: database reactivation guide."""
+    return FileResponse(WEB_DIR / "guide.html")
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+async def sitemap():
+    return FileResponse(WEB_DIR / "sitemap.xml", media_type="application/xml")
+
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "version": __version__, "service": "revio-ai-api"}

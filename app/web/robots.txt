@@ -3,6 +3,8 @@ Allow: /
 Disallow: /admin
 Disallow: /api/
 
+Sitemap: https://revioai.site/sitemap.xml
+
 # AI crawlers welcome
 User-agent: GPTBot
 Allow: /
