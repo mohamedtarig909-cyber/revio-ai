@@ -296,6 +296,28 @@
   .empty{padding:50px;text-align:center;color:var(--dim);font-size:15px}
   .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);z-index:200;padding:14px 22px;border-radius:13px;font-size:14px;opacity:0;pointer-events:none;transition:.3s}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* system builder */
+  .builder{max-width:820px;margin:0 auto}
+  .builder textarea{width:100%;min-height:110px;padding:16px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--border-strong);color:var(--text);font-size:15px;font-family:var(--font);outline:none;resize:vertical}
+  .builder textarea:focus{border-color:var(--signal)}
+  .b-stage{display:flex;align-items:center;gap:10px;padding:9px 0;font-family:var(--mono);font-size:13.5px;color:var(--muted);opacity:0;transform:translateY(6px);transition:.35s}
+  .b-stage.show{opacity:1;transform:none}
+  .b-stage .tick{color:var(--signal);font-weight:700}
+  .b-card{padding:20px;border-radius:14px;margin-top:14px;text-align:left}
+  .b-card h4{font-family:var(--display);font-weight:700;font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .b-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .b-kv{font-size:13.5px;color:var(--muted);padding:4px 0}
+  .b-kv b{color:var(--text)}
+  .b-step{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);font-size:13.5px;color:var(--muted)}
+  .b-step:last-child{border-bottom:none}
+  .b-step .d{font-family:var(--mono);color:var(--signal);min-width:52px}
+  .b-msg{font-size:13.5px;color:var(--text);white-space:pre-wrap;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px;font-family:var(--mono)}
+  .b-locked{position:relative;overflow:hidden}
+  .b-locked .content{filter:blur(5px);pointer-events:none;user-select:none}
+  .b-lockover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(6,8,13,.55);border-radius:14px}
+  .b-lockover .lk{font-size:26px}
+  .b-recover{font-family:var(--display);font-weight:900;font-size:clamp(30px,4vw,44px);color:var(--signal);letter-spacing:-1px}
+  @media(max-width:920px){.b-grid{grid-template-columns:1fr}}
   /* onboarding wizard */
   .ob-progress{display:flex;gap:8px;justify-content:center;margin-bottom:26px}
   .ob-progress i{width:34px;height:5px;border-radius:5px;background:rgba(255,255,255,.12);transition:.3s}
@@ -341,7 +363,7 @@
 <div id="site">
 <nav><div class="wrap">
   <div class="brand"><div class="logo"><svg viewBox="0 0 24 24" width="64%" height="64%" fill="none" stroke="#06080D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14h4l2.5 4 3-12 2.5 6H22"/></svg></div>Revio<span style="color:var(--signal)">&nbsp;AI</span></div>
-  <div class="navlinks"><a href="#features">Features</a><a href="#calculator">ROI</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></div>
+  <div class="navlinks"><a href="#builder">Builder</a><a href="#features">Features</a><a href="#calculator">ROI</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></div>
   <div class="navcta">
     <button class="btn btn-ghost" onclick="openAuth('signin')">Sign in</button>
     <button class="btn btn-primary" onclick="goCheckout()">Get started</button>
@@ -443,6 +465,23 @@
     <div class="step glass"><div class="n">01</div><h3>Bring your leads</h3><p>Drag in a CSV or connect your CRM. Revio maps and dedupes every record automatically.</p></div>
     <div class="step glass"><div class="n">02</div><h3>Run a scan</h3><p>Each lead is scored and diagnosed. The command center fills with revivable deals ranked by recoverable dollars.</p></div>
     <div class="step glass"><div class="n">03</div><h3>Approve & recover</h3><p>Approve the top cohort, watch replies and booked calls land, and see recovered revenue attributed back.</p></div>
+  </div>
+</div></section>
+
+<section id="builder" class="reveal"><div class="wrap">
+  <div class="eyebrow">System builder</div>
+  <h2>Describe a client. <span class="serif-accent">Watch their system get built.</span></h2>
+  <p class="lead">Type who the client is — the AI assembles their complete revival system: scoring model, sequence, messaging, and your sell kit. Free to try.</p>
+  <div class="builder">
+    <div class="glass" style="padding:22px;border-radius:18px">
+      <textarea id="bDesc" placeholder="e.g. HVAC company in Dallas, around 2,200 dead leads sitting in their CRM, most went quiet after getting a quote, average job $6,500…"></textarea>
+      <input id="bEmail" type="email" placeholder="Your email (to save your system)" style="width:100%;margin-top:10px;padding:12px 14px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid var(--border-strong);color:var(--text);font-size:14px;font-family:var(--font);outline:none"/>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px">
+        <button class="btn btn-primary btn-lg" id="bGo" onclick="builderRun()">⚡ Build the system</button>
+      </div>
+    </div>
+    <div id="bStages" style="margin-top:18px"></div>
+    <div id="bResult"></div>
   </div>
 </div></section>
 
@@ -1021,6 +1060,47 @@
     }catch(e){ toast('Upload failed — is the backend live?'); }
   }
   function obFinish(){ obOv.classList.remove('open'); enterProduct(); }
+
+  /* ── System Builder (free preview → subscribe to unlock) ── */
+  const B_STAGES=['Analyzing the client profile…','Configuring the deterministic scoring model…','Designing the multi-touch revival sequence…','Writing objection-aware messaging…','Assembling your sell kit…','Connecting the pieces…'];
+  async function builderRun(){
+    const desc=document.getElementById('bDesc').value.trim();
+    const email=document.getElementById('bEmail').value.trim();
+    if(desc.length<10){toast('Describe the client in a sentence or two first');return}
+    const btn=document.getElementById('bGo');btn.disabled=true;btn.textContent='Building…';
+    const st=document.getElementById('bStages');const res=document.getElementById('bResult');
+    res.innerHTML='';st.innerHTML=B_STAGES.map((s,i)=>'<div class="b-stage" id="bs'+i+'"><span class="tick" id="bt'+i+'">◌</span>'+s+'</div>').join('');
+    let i=0;const anim=setInterval(()=>{if(i<B_STAGES.length){const el=document.getElementById('bs'+i);if(el)el.classList.add('show');if(i>0)document.getElementById('bt'+(i-1)).textContent='✓';i++;}},650);
+    let spec=null;
+    try{
+      const r=await fetch(API_BASE+'/api/v1/builder/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({description:desc,email:email})});
+      if(r.status===429){clearInterval(anim);st.innerHTML='';toast('Builder limit reached for now — try again in an hour');btn.disabled=false;btn.textContent='⚡ Build the system';return}
+      if(!r.ok)throw new Error(r.status);
+      spec=await r.json();
+    }catch(e){clearInterval(anim);st.innerHTML='';toast('Could not reach the builder — try again shortly');btn.disabled=false;btn.textContent='⚡ Build the system';return}
+    // let the animation finish, then reveal
+    const wait=setInterval(()=>{if(i>=B_STAGES.length){clearInterval(wait);clearInterval(anim);
+      document.getElementById('bt'+(B_STAGES.length-1)).textContent='✓';
+      setTimeout(()=>{st.innerHTML='';renderSpec(spec);},350);
+      btn.disabled=false;btn.textContent='⚡ Build the system';
+    }},200);
+  }
+  function renderSpec(s){
+    const p=s.business_profile||{},sc=s.scoring_config||{},kit=s.sell_kit||{};
+    const seq=(s.revival_sequence||[]).map(x=>'<div class="b-step"><span class="d">Day '+x.day+'</span><span><b style="color:var(--text)">'+esc(x.channel)+'</b> — '+esc(x.angle)+'</span></div>').join('');
+    const locked=(s.locked_components||[]).map(x=>'<div class="b-kv">🔒 '+esc(x)+'</div>').join('');
+    document.getElementById('bResult').innerHTML=
+      '<div class="glass b-card" style="text-align:center;margin-top:22px"><div class="b-kv" style="font-family:var(--mono);text-transform:uppercase;letter-spacing:1px">Projected recoverable revenue</div><div class="b-recover">'+fmtUSD(s.projected_recoverable_usd)+'</div><div class="b-kv">from ~'+((p.estimated_dead_leads||0).toLocaleString())+' dead leads · conservative model</div></div>'+
+      '<div class="b-grid">'+
+      '<div class="glass b-card"><h4>🏢 Client profile</h4><div class="b-kv">Industry: <b>'+esc(p.industry||'—')+'</b></div><div class="b-kv">Dead leads: <b>'+((p.estimated_dead_leads||0).toLocaleString())+'</b></div><div class="b-kv">Avg deal: <b>'+fmtUSD(p.est_avg_deal_value)+'</b></div><div class="b-kv">Channel: <b>'+esc(p.primary_channel||'—')+'</b></div><div class="b-kv">Angle: <b>'+esc(p.positioning_hook||'—')+'</b></div></div>'+
+      '<div class="glass b-card"><h4>🎯 Scoring model</h4><div class="b-kv">Engine: <b>'+esc(sc.model||'Dead Lead Score v2')+'</b></div><div class="b-kv">Decay half-life: <b>'+(sc.decay_halflife_days||90)+' days</b></div><div class="b-kv">Factors: <b>'+(sc.factors||[]).join(' × ')+'</b></div></div>'+
+      '<div class="glass b-card"><h4>⚡ Revival sequence</h4>'+seq+'</div>'+
+      '<div class="glass b-card"><h4>✉️ Sample message (unlocked)</h4><div class="b-msg">'+esc(s.sample_message||'')+'</div></div>'+
+      '<div class="glass b-card"><h4>💼 Your sell kit</h4><div class="b-kv">Suggested retainer: <b>'+esc(kit.suggested_retainer||'$500–$1,500/mo')+'</b></div><div class="b-kv" style="margin-top:6px">Pitch opener:</div><div class="b-msg" style="margin-top:6px">'+esc(kit.pitch_opener||'')+'</div></div>'+
+      '<div class="glass b-card b-locked"><div class="content"><h4>🔒 Full system</h4>'+locked+'</div><div class="b-lockover"><span class="lk">🔒</span><b style="font-family:var(--display)">Your system is built — activate it</b><span class="muted" style="color:var(--muted);font-size:13px">Subscribe to unlock the full copy, live scoring & client dashboard</span><button class="btn btn-primary" onclick="goCheckout(\'growth\')">Activate — from $149/mo →</button><a style="color:var(--signal);cursor:pointer;font-size:13px" onclick="openAuth(\'signup\')">or create your account first</a></div></div>'+
+      '</div>';
+    document.getElementById('bResult').scrollIntoView({behavior:'smooth',block:'start'});
+  }
 
   let tt;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2800)}
 </script>

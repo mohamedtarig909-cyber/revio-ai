@@ -1,9 +1,10 @@
 from fastapi import APIRouter
 
-from app.api.routes import admin, auth, crm, dashboard, leads, operations, upload, webhooks
+from app.api.routes import admin, auth, builder, crm, dashboard, leads, operations, upload, webhooks
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
+api_router.include_router(builder.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(leads.router)
 api_router.include_router(operations.router)
