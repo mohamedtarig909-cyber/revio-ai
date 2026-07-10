@@ -15,13 +15,14 @@ from __future__ import annotations
 import json
 import logging
 import re
+import time
+from collections import defaultdict
 
 import httpx
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from app.config import get_settings
-from app.core.rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -167,10 +168,27 @@ async def _llm_spec(description: str) -> dict | None:
         return None
 
 
+# Manual per-IP rate limit (slowapi's decorator breaks Pydantic body parsing).
+_hits: dict[str, list[float]] = defaultdict(list)
+_WINDOW, _MAX = 3600.0, 6
+
+
+def _rate_ok(ip: str) -> bool:
+    now = time.time()
+    _hits[ip] = [t for t in _hits[ip] if now - t < _WINDOW]
+    if len(_hits[ip]) >= _MAX:
+        return False
+    _hits[ip].append(now)
+    return True
+
+
 @router.post("/preview")
-@limiter.limit("6/hour")
 async def build_preview(request: Request, body: BuildIn):
     """Generate a client revival-system spec from a plain-language description."""
+    ip = (request.headers.get("x-forwarded-for") or "").split(",")[0].strip() \
+        or (request.client.host if request.client else "unknown")
+    if not _rate_ok(ip):
+        raise HTTPException(status_code=429, detail="Builder limit reached — try again in an hour")
     if body.email:
         logger.info("[builder-lead] email=%s desc=%s", body.email, body.description[:120])
     spec = await _llm_spec(body.description) or _template_spec(body.description)
