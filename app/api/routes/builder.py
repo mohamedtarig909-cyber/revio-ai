@@ -74,7 +74,10 @@ def _detect_industry(text: str) -> dict:
 
 
 def _detect_lead_count(text: str) -> int:
-    nums = [int(n.replace(",", "")) for n in re.findall(r"(\d[\d,]{1,6})", text)]
+    # Ignore dollar amounts ($6,500) — only bare numbers count as lead counts.
+    nums = [int(m.group(1).replace(",", ""))
+            for m in re.finditer(r"(?<![$\d.])(\d[\d,]{1,6})(?!\s*%)", text)
+            if not re.search(r"\$\s*$", text[:m.start()])]
     plausible = [n for n in nums if 50 <= n <= 500000]
     return max(plausible) if plausible else 1500
 
