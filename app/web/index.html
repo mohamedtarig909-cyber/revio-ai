@@ -29,17 +29,17 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%232DD4BF'/><stop offset='.5' stop-color='%238B7BFF'/><stop offset='1' stop-color='%2356A8FF'/></linearGradient></defs><rect width='32' height='32' rx='8' fill='url(%23g)'/><path d='M5 18h4l3 6 4-16 3 10h8' fill='none' stroke='%2306080D' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;450;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Source+Serif+4:ital,wght@1,400;1,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --bg:#06080D; --bg-2:#0A0E16; --surface:#11161F;
-    --glass:rgba(20,26,37,0.55); --glass-2:rgba(30,38,54,0.42);
-    --border:rgba(255,255,255,0.08); --border-strong:rgba(255,255,255,0.16);
-    --text:#F1F5FB; --muted:#9AA7BC; --dim:#5C667A;
-    --signal:#2DD4BF; --signal-2:#34E0C8; --violet:#8B7BFF; --accent:#56A8FF; --gold:#FBBF24; --rose:#FB7185;
-    --glow:rgba(45,212,191,0.45); --glow-v:rgba(139,123,255,0.40);
-    --r:18px; --maxw:1200px;
-    --font:'Inter',system-ui,sans-serif; --display:'Archivo',var(--font); --serif:'Instrument Serif',Georgia,serif; --mono:'JetBrains Mono',monospace;
+    --bg:#09090b; --bg-2:#0e0e11; --surface:#141417;
+    --glass:rgba(255,255,255,0.02); --glass-2:rgba(255,255,255,0.035);
+    --border:rgba(255,255,255,0.09); --border-strong:rgba(255,255,255,0.18);
+    --text:#ffffff; --muted:rgba(255,255,255,0.62); --dim:rgba(255,255,255,0.42);
+    --signal:#2DD4BF; --signal-2:#34E0C8; --violet:#a78bfa; --accent:#8ab4ff; --gold:#FBBF24; --rose:#FB7185;
+    --glow:rgba(255,255,255,0.10); --glow-v:rgba(255,255,255,0.08);
+    --r:1rem; --maxw:1200px;
+    --font:'Poppins',system-ui,sans-serif; --display:'Poppins',var(--font); --serif:'Source Serif 4',Georgia,serif; --mono:'JetBrains Mono',monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
@@ -51,11 +51,17 @@
   .orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:.5;animation:float 20s ease-in-out infinite}
   .orb.a{width:560px;height:560px;background:radial-gradient(circle,var(--glow),transparent 70%);top:-180px;left:-140px}
   .orb.b{width:520px;height:520px;background:radial-gradient(circle,var(--glow-v),transparent 70%);top:8%;right:-180px;animation-delay:-7s}
-  .orb.c{width:460px;height:460px;background:radial-gradient(circle,rgba(86,168,255,.32),transparent 70%);top:48%;left:24%;animation-delay:-13s}
+  .orb.c{width:640px;height:640px;background:radial-gradient(circle,rgba(255,255,255,.08),transparent 70%);top:48%;left:24%;animation-delay:-13s}
+  .bgfx::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 20%,transparent 40%,rgba(0,0,0,.5) 100%)}
   @keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(46px,-34px) scale(1.08)}66%{transform:translate(-34px,22px) scale(.95)}}
   #cursor{position:fixed;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(45,212,191,.07),transparent 65%);transform:translate(-50%,-50%);z-index:1;pointer-events:none;transition:opacity .3s;opacity:0}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;position:relative;z-index:2}
-  .glass{background:var(--glass);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 8px 44px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.05)}
+  /* liquid glass — light tier */
+  .glass{background:rgba(255,255,255,0.015);background-blend-mode:luminosity;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:none;border-radius:var(--r);box-shadow:inset 0 1px 1px rgba(255,255,255,0.1),0 10px 40px rgba(0,0,0,.35);position:relative}
+  .glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.4px;background:linear-gradient(180deg,rgba(255,255,255,0.45) 0%,rgba(255,255,255,0.15) 20%,transparent 40%,transparent 60%,rgba(255,255,255,0.15) 80%,rgba(255,255,255,0.45) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;pointer-events:none;opacity:.55}
+  /* liquid glass — strong tier (panels, modals, hero shell) */
+  .glass-strong,.modal.glass,.dash.glass{background:rgba(16,16,20,0.55);backdrop-filter:blur(50px) saturate(120%);-webkit-backdrop-filter:blur(50px) saturate(120%);box-shadow:4px 4px 24px rgba(0,0,0,0.25),inset 0 1px 1px rgba(255,255,255,0.15)}
+  .glass-strong::before,.modal.glass::before{opacity:.8;background:linear-gradient(180deg,rgba(255,255,255,0.5) 0%,rgba(255,255,255,0.2) 20%,transparent 40%,transparent 60%,rgba(255,255,255,0.2) 80%,rgba(255,255,255,0.5) 100%)}
 
   /* progress + nav */
   #prog{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--signal),var(--violet));z-index:60;box-shadow:0 0 12px var(--glow)}
@@ -68,12 +74,16 @@
   .navlinks a{color:var(--muted);text-decoration:none;font-size:14.5px;font-weight:500;transition:color .2s}
   .navlinks a:hover{color:var(--text)}
   .navcta{display:flex;gap:12px;align-items:center}
-  .btn{font-family:var(--font);font-weight:600;font-size:14px;border:none;border-radius:12px;padding:11px 20px;cursor:pointer;transition:transform .15s,box-shadow .25s,background .2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
-  .btn:active{transform:translateY(1px)}
-  .btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border-strong)}
-  .btn-ghost:hover{background:rgba(255,255,255,.06)}
-  .btn-primary{background:linear-gradient(135deg,var(--signal),var(--signal-2));color:#04201C;box-shadow:0 6px 26px var(--glow)}
-  .btn-primary:hover{box-shadow:0 12px 38px var(--glow);transform:translateY(-2px)}
+  .btn{font-family:var(--font);font-weight:500;font-size:14px;border:none;border-radius:999px;padding:12px 22px;cursor:pointer;transition:transform .18s cubic-bezier(.2,.7,.2,1),box-shadow .25s,background .2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+  .btn:hover{transform:scale(1.05)}
+  .btn:active{transform:scale(.95)}
+  .btn svg{width:16px;height:16px;flex-shrink:0}
+  .btn .ic{width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.12);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+  .btn-ghost{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--border);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .btn-ghost:hover{background:rgba(255,255,255,.09)}
+  .btn-ghost .ic{background:rgba(255,255,255,.12)}
+  .btn-primary{background:#fff;color:#0a0a0b;box-shadow:0 8px 30px rgba(255,255,255,.14),inset 0 -1px 0 rgba(0,0,0,.08)}
+  .btn-primary:hover{box-shadow:0 14px 44px rgba(255,255,255,.22)}
   .btn-lg{padding:16px 30px;font-size:16px;border-radius:14px}
 
   /* HERO */
@@ -82,7 +92,12 @@
   .pill i,.mock-live i{width:7px;height:7px;border-radius:50%;background:var(--signal);box-shadow:0 0 10px var(--signal);animation:pulse 2s infinite;display:inline-block;font-style:normal}
   @keyframes pulse{50%{opacity:.35}}
   h1.huge{font-family:var(--display);font-weight:900;font-size:clamp(46px,8vw,96px);line-height:.95;letter-spacing:-3px;margin:0 auto 8px;max-width:14ch}
-  .serif-accent{font-family:var(--serif);font-weight:400;font-style:italic;letter-spacing:-1px;background:linear-gradient(120deg,var(--signal),var(--violet) 55%,var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .serif-accent{font-family:var(--serif);font-weight:400;font-style:italic;letter-spacing:-.5px;color:rgba(255,255,255,.78)}
+  h1,h2,h3,h4,h5{font-weight:500}
+  header.hero .bh>*{animation:riseIn .8s cubic-bezier(.2,.7,.2,1) both}
+  header.hero .bh>*:nth-child(2){animation-delay:.08s}
+  header.hero .bh>*:nth-child(3){animation-delay:.16s}
+  header.hero .bh>*:nth-child(4){animation-delay:.26s}
   .hero .sub{font-size:clamp(17px,2vw,21px);color:var(--muted);max-width:600px;margin:26px auto 36px}
   .hero-cta{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
   .microtrust{display:flex;gap:24px;justify-content:center;color:var(--dim);font-size:13px;flex-wrap:wrap}
@@ -296,6 +311,51 @@
   .empty{padding:50px;text-align:center;color:var(--dim);font-size:15px}
   .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);z-index:200;padding:14px 22px;border-radius:13px;font-size:14px;opacity:0;pointer-events:none;transition:.3s}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* builder hero */
+  .bh{max-width:1080px;margin:0 auto;text-align:left}
+  .bh-title{font-family:var(--display);font-weight:900;font-size:clamp(30px,4.6vw,52px);letter-spacing:-1.8px;line-height:1.02;text-align:center;margin-bottom:10px}
+  .bh-sub{text-align:center;color:var(--muted);font-size:16px;margin-bottom:30px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
+  .chip{padding:8px 15px;border-radius:999px;border:1px solid var(--border-strong);background:rgba(255,255,255,.03);color:var(--muted);font-size:13.5px;font-weight:500;cursor:pointer;transition:.18s;user-select:none}
+  .chip:hover{border-color:var(--signal);color:var(--text);transform:translateY(-1px)}
+  .chip.on{background:linear-gradient(135deg,rgba(45,212,191,.18),rgba(139,123,255,.14));border-color:var(--signal);color:var(--text);box-shadow:0 4px 18px rgba(45,212,191,.15)}
+  .chip-label{font-family:var(--mono);font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim);margin:16px 0 2px}
+  .bh-prompt{position:relative;margin-top:16px}
+  .bh-prompt textarea{width:100%;min-height:92px;padding:18px 150px 18px 18px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--border-strong);color:var(--text);font-size:15px;font-family:var(--font);outline:none;resize:none;transition:border-color .2s}
+  .bh-prompt textarea:focus{border-color:var(--signal);box-shadow:0 0 0 3px rgba(45,212,191,.12)}
+  .bh-prompt .go{position:absolute;right:12px;bottom:12px}
+  /* build stages */
+  .b-stage{display:flex;align-items:center;gap:10px;padding:8px 0;font-family:var(--mono);font-size:13.5px;color:var(--muted);opacity:0;transform:translateY(6px);transition:.35s}
+  .b-stage.show{opacity:1;transform:none}
+  .b-stage .tick{color:var(--signal);font-weight:700;width:16px;display:inline-block}
+  /* node graph */
+  .flow{margin-top:26px;padding:26px;border-radius:22px;position:relative;overflow-x:auto}
+  .flow-lane{display:flex;align-items:stretch;gap:0;min-width:720px}
+  .fnode{flex:1;min-width:120px;background:var(--glass-2);border:1px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;transition:.2s;position:relative;opacity:0;transform:translateY(14px) scale(.96)}
+  .fnode.in{opacity:1;transform:none}
+  .fnode:hover{border-color:var(--signal);transform:translateY(-3px)}
+  .fnode.sel{border-color:var(--signal);box-shadow:0 8px 30px rgba(45,212,191,.18)}
+  .fnode .fi{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:16px;background:linear-gradient(135deg,rgba(45,212,191,.18),rgba(139,123,255,.18));margin-bottom:9px}
+  .fnode h5{font-family:var(--display);font-weight:700;font-size:13px;margin-bottom:3px}
+  .fnode p{font-size:11px;color:var(--dim);line-height:1.4;margin:0}
+  .fnode .pulse{position:absolute;top:10px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--signal);box-shadow:0 0 8px var(--signal);animation:pulse 2s infinite}
+  .fcon{display:flex;align-items:center;padding:0 4px;color:var(--signal);opacity:.6;font-size:16px;flex:0 0 auto}
+  .fdetail{margin-top:14px;padding:18px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--border);font-size:13.5px;color:var(--muted);display:none;animation:fade .3s}
+  .fdetail.open{display:block}
+  .fdetail b{color:var(--text)}
+  /* action bar (locked actions) */
+  .abar{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+  .abar .btn .lk{opacity:.7;margin-left:4px;font-size:12px}
+  /* template cards */
+  .tpl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .tpl{padding:22px;border-radius:var(--r);cursor:pointer;transition:.22s;position:relative;overflow:hidden}
+  .tpl:hover{transform:translateY(-5px);border-color:var(--border-strong)}
+  .tpl .ti{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:19px;background:linear-gradient(135deg,rgba(45,212,191,.18),rgba(139,123,255,.18));border:1px solid var(--border);margin-bottom:12px}
+  .tpl h3{font-family:var(--display);font-weight:700;font-size:15.5px;margin-bottom:6px}
+  .tpl p{font-size:12.5px;color:var(--muted);margin:0}
+  .tpl .go{margin-top:12px;font-size:12.5px;color:var(--signal);font-weight:600}
+  @media(max-width:920px){.tpl-grid{grid-template-columns:1fr 1fr}.bh-prompt textarea{padding-right:18px;min-height:120px}.bh-prompt .go{position:static;width:100%;margin-top:10px;justify-content:center;display:flex}}
+  @media(max-width:560px){.tpl-grid{grid-template-columns:1fr}}
   /* system builder */
   .builder{max-width:820px;margin:0 auto}
   .builder textarea{width:100%;min-height:110px;padding:16px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--border-strong);color:var(--text);font-size:15px;font-family:var(--font);outline:none;resize:vertical}
@@ -363,47 +423,36 @@
 <div id="site">
 <nav><div class="wrap">
   <div class="brand"><div class="logo"><svg viewBox="0 0 24 24" width="64%" height="64%" fill="none" stroke="#06080D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14h4l2.5 4 3-12 2.5 6H22"/></svg></div>Revio<span style="color:var(--signal)">&nbsp;AI</span></div>
-  <div class="navlinks"><a href="#builder">Builder</a><a href="#features">Features</a><a href="#calculator">ROI</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></div>
+  <div class="navlinks"><a href="#templates">Templates</a><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a></div>
   <div class="navcta">
     <button class="btn btn-ghost" onclick="openAuth('signin')">Sign in</button>
     <button class="btn btn-primary" onclick="goCheckout()">Get started</button>
   </div>
 </div></nav>
 
-<header class="hero"><div class="wrap">
-  <div class="pill"><i></i>AI DEAD LEAD RESURRECTION</div>
-  <h1 class="huge">Your dead leads<br>aren't dead.<br><span class="serif-accent">They're revenue you forgot to collect.</span></h1>
-  <p class="sub">Revio AI is an AI lead-reactivation platform that scores every cold lead 0–100, diagnoses exactly why it went quiet, and drafts the campaign that brings it back — so you reopen deals you already paid to acquire.</p>
-  <div class="hero-cta">
-    <button class="btn btn-primary btn-lg" onclick="goCheckout()">Start resurrecting →</button>
-    <button class="btn btn-ghost btn-lg" onclick="goCheckout()">Launch command center</button>
-  </div>
-  <div class="microtrust"><span><b>14-day</b> free trial</span><span><b>Human-approved</b> sending — nothing goes out without your OK</span><span>Cancel anytime</span></div>
+<header class="hero" style="padding:56px 0 60px"><div class="wrap">
+  <div class="bh">
+    <div style="text-align:center"><div class="pill"><i></i>LIVE AI SYSTEM BUILDER</div></div>
+    <h1 class="bh-title">Build your client's AI revenue system.<br><span class="serif-accent">Right now. Right here.</span></h1>
+    <p class="bh-sub">Revio AI is an AI lead-reactivation platform. Pick a business, pick a goal, hit generate — and watch the system get built.</p>
 
-  <div class="scene"><div class="tilt glass mock" id="tilt">
-    <div class="badge3d">+$96,000 recoverable</div>
-    <div class="mock-head"><div class="mock-title">Command center</div><div class="mock-live"><i></i>live</div></div>
-    <div class="mock-grid">
-      <div>
-        <div class="mrow">
-          <div class="mstat"><div class="k">Resurrection score</div><div class="v t">87</div></div>
-          <div class="mstat"><div class="k">Recovered pipeline</div><div class="v g">$218k</div></div>
-        </div>
-        <div class="bars">
-          <div class="bar"><span>Real estate</span><div class="track"><div class="fill" style="width:92%"></div></div><b style="color:var(--text)">$96k</b></div>
-          <div class="bar"><span>Solar quotes</span><div class="track"><div class="fill" style="width:64%"></div></div><b style="color:var(--text)">$58k</b></div>
-          <div class="bar"><span>Win-back</span><div class="track"><div class="fill v" style="width:44%"></div></div><b style="color:var(--text)">$41k</b></div>
-          <div class="bar"><span>Insurance</span><div class="track"><div class="fill" style="width:30%"></div></div><b style="color:var(--text)">$27k</b></div>
-        </div>
+    <div class="glass" style="padding:26px;border-radius:22px">
+      <div class="chip-label">1 · Business type</div>
+      <div class="chips" id="chipType"></div>
+      <div class="chip-label">2 · Business goal</div>
+      <div class="chips" id="chipGoal"></div>
+      <div class="chip-label">3 · Describe it (optional — selections write this for you)</div>
+      <div class="bh-prompt">
+        <textarea id="bDesc"></textarea>
+        <button class="btn btn-primary btn-lg go" id="bGo" onclick="heroGenerate()">⚡ Generate</button>
       </div>
-      <div class="mstat" style="display:flex;flex-direction:column;gap:12px">
-        <div class="k">Top action</div>
-        <div style="font-family:var(--display);font-weight:700;font-size:15px;line-height:1.3">Revive 42 cold buyers showing renewed intent</div>
-        <div style="font-family:var(--mono);font-size:12px;color:var(--signal)">revival prob 71% · window 6d</div>
-        <button class="btn btn-primary" style="margin-top:auto">Resurrect →</button>
-      </div>
+      <input id="bEmail" type="email" placeholder="Your email (to save your system — optional)" style="width:100%;margin-top:10px;padding:11px 14px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--text);font-size:13.5px;font-family:var(--font);outline:none"/>
     </div>
-  </div></div>
+
+    <div id="bStages" style="margin-top:16px;max-width:560px;margin-left:auto;margin-right:auto"></div>
+    <div id="bFlow"></div>
+    <div id="bResult"></div>
+  </div>
 </div></header>
 
 <section class="reveal" style="padding:30px 0"><div class="wrap">
@@ -468,20 +517,19 @@
   </div>
 </div></section>
 
-<section id="builder" class="reveal"><div class="wrap">
-  <div class="eyebrow">System builder</div>
-  <h2>Describe a client. <span class="serif-accent">Watch their system get built.</span></h2>
-  <p class="lead">Type who the client is — the AI assembles their complete revival system: scoring model, sequence, messaging, and your sell kit. Free to try.</p>
-  <div class="builder">
-    <div class="glass" style="padding:22px;border-radius:18px">
-      <textarea id="bDesc" placeholder="e.g. HVAC company in Dallas, around 2,200 dead leads sitting in their CRM, most went quiet after getting a quote, average job $6,500…"></textarea>
-      <input id="bEmail" type="email" placeholder="Your email (to save your system)" style="width:100%;margin-top:10px;padding:12px 14px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid var(--border-strong);color:var(--text);font-size:14px;font-family:var(--font);outline:none"/>
-      <div style="display:flex;justify-content:flex-end;margin-top:12px">
-        <button class="btn btn-primary btn-lg" id="bGo" onclick="builderRun()">⚡ Build the system</button>
-      </div>
-    </div>
-    <div id="bStages" style="margin-top:18px"></div>
-    <div id="bResult"></div>
+<section id="templates" class="reveal"><div class="wrap">
+  <div class="eyebrow">Templates</div>
+  <h2>Start from a proven <span class="serif-accent">system template.</span></h2>
+  <p class="lead">One click loads the template into the builder and generates it live — swap the niche, keep the system.</p>
+  <div class="tpl-grid">
+    <div class="tpl glass" onclick="useTemplate('Roofing','Generate Leads')"><div class="ti">🧲</div><h3>AI Lead Generation</h3><p>Capture, qualify and route new inquiries automatically.</p><div class="go">Preview in builder →</div></div>
+    <div class="tpl glass" onclick="useTemplate('Law Firm','AI Receptionist')"><div class="ti">☎️</div><h3>AI Receptionist</h3><p>Answers, qualifies and books inbound calls 24/7.</p><div class="go">Preview in builder →</div></div>
+    <div class="tpl glass" onclick="useTemplate('Med Spa','Follow Up')"><div class="ti">🔁</div><h3>AI Follow-Up</h3><p>Persistent multi-touch cadence that never forgets a lead.</p><div class="go">Preview in builder →</div></div>
+    <div class="tpl glass" onclick="useTemplate('HVAC','Revive Dead Leads')"><div class="ti">⚡</div><h3>Dead Lead Resurrection</h3><p>Score, diagnose and revive the leads they already paid for.</p><div class="go">Preview in builder →</div></div>
+    <div class="tpl glass" onclick="useTemplate('Dental','Book Appointments')"><div class="ti">📅</div><h3>Appointment Setter</h3><p>Turns replies into booked calendar slots automatically.</p><div class="go">Preview in builder →</div></div>
+    <div class="tpl glass" onclick="useTemplate('Real Estate','CRM Automation')"><div class="ti">🗂</div><h3>CRM Automation</h3><p>Cleans, tags, dedupes and syncs records continuously.</p><div class="go">Preview in builder →</div></div>
+    <div class="tpl glass" onclick="useTemplate('Auto Repair','Review Collection')"><div class="ti">⭐</div><h3>Review Collection</h3><p>Requests reviews at the exact win moment, every time.</p><div class="go">Preview in builder →</div></div>
+    <div class="tpl glass" onclick="useTemplate('Solar','Missed Call Text Back')"><div class="ti">📱</div><h3>Missed Call Text Back</h3><p>Instant SMS rescue for every call they couldn't answer.</p><div class="go">Preview in builder →</div></div>
   </div>
 </div></section>
 
@@ -847,11 +895,12 @@
   addEventListener('mousemove',e=>{cur.style.left=e.clientX+'px';cur.style.top=e.clientY+'px';cur.style.opacity=1});
   function glow(el,e){const r=el.getBoundingClientRect();el.style.setProperty('--mx',(e.clientX-r.left)+'px');el.style.setProperty('--my',(e.clientY-r.top)+'px')}
 
-  /* hero tilt */
-  const tilt=document.getElementById('tilt'),scene=tilt.closest('.scene');
-  scene.addEventListener('mousemove',e=>{const r=scene.getBoundingClientRect();const px=(e.clientX-r.left)/r.width-.5,py=(e.clientY-r.top)/r.height-.5;tilt.style.transform=`rotateX(${-py*8}deg) rotateY(${px*8}deg)`});
-  scene.addEventListener('mouseleave',()=>tilt.style.transform='rotateX(3deg) rotateY(0)');
-  tilt.style.transform='rotateX(3deg) rotateY(0)';
+  /* hero tilt (legacy — hero is now the live builder) */
+  const tilt=document.getElementById('tilt');
+  if(tilt){const scene=tilt.closest('.scene');
+    scene.addEventListener('mousemove',e=>{const r=scene.getBoundingClientRect();const px=(e.clientX-r.left)/r.width-.5,py=(e.clientY-r.top)/r.height-.5;tilt.style.transform=`rotateX(${-py*8}deg) rotateY(${px*8}deg)`});
+    scene.addEventListener('mouseleave',()=>tilt.style.transform='rotateX(3deg) rotateY(0)');
+    tilt.style.transform='rotateX(3deg) rotateY(0)';}
 
   /* reveal on scroll */
   const io=new IntersectionObserver((es)=>es.forEach(en=>{if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target)}}),{threshold:.12});
@@ -1061,8 +1110,93 @@
   }
   function obFinish(){ obOv.classList.remove('open'); enterProduct(); }
 
-  /* ── System Builder (free preview → subscribe to unlock) ── */
-  const B_STAGES=['Analyzing the client profile…','Configuring the deterministic scoring model…','Designing the multi-touch revival sequence…','Writing objection-aware messaging…','Assembling your sell kit…','Connecting the pieces…'];
+  /* ── Interactive System Builder (state-driven; free preview → unlock) ── */
+  const B_TYPES=['HVAC','Solar','Plumbing','Roofing','Dental','Law Firm','Med Spa','Real Estate','Kitchen Remodeling','Auto Repair'];
+  const B_GOALS=['Revive Dead Leads','Book Appointments','Follow Up','Generate Leads','AI Receptionist','Missed Call Text Back','Review Collection','CRM Automation'];
+  const GOAL_NODE={'Revive Dead Leads':['🩺 Diagnosis Agent','Why each lead died'],'Book Appointments':['📅 Booking Agent','Routes hot replies to the calendar'],'Follow Up':['🔁 Follow-Up Agent','Persistent multi-touch cadence'],'Generate Leads':['🧲 Intake Agent','Captures + qualifies new inquiries'],'AI Receptionist':['☎️ Reception Agent','Answers + qualifies inbound'],'Missed Call Text Back':['📱 Text-Back Agent','Instant SMS on missed calls'],'Review Collection':['⭐ Review Agent','Requests reviews at the win moment'],'CRM Automation':['🗂 CRM Agent','Cleans, tags & syncs records']};
+  let selType='HVAC', selGoal='Revive Dead Leads', bSpec=null;
+  function chipRow(id,items,sel,fn){const el=document.getElementById(id);if(!el)return;
+    el.innerHTML=items.map(x=>'<span class="chip'+(x===sel?' on':'')+'" onclick="'+fn+'(\''+x.replace(/'/g,"\\'")+'\')">'+x+'</span>').join('');}
+  function setType(t){selType=t;chipRow('chipType',B_TYPES,selType,'setType');writePrompt();if(bSpec)heroGenerate(true);}
+  function setGoal(g){selGoal=g;chipRow('chipGoal',B_GOALS,selGoal,'setGoal');writePrompt();if(bSpec)heroGenerate(true);}
+  function writePrompt(){const d=document.getElementById('bDesc');if(!d)return;
+    d.value='Build an AI '+selGoal.toLowerCase()+' system for a '+selType.toLowerCase()+' company with around 1,500 dead leads in their CRM.';}
+  chipRow('chipType',B_TYPES,selType,'setType');chipRow('chipGoal',B_GOALS,selGoal,'setGoal');writePrompt();
+
+  const H_STAGES=['Understanding business','Selecting AI agents','Creating workflow','Building CRM','Connecting automations','Creating prompts','Configuring outreach','Finalizing deployment'];
+  async function heroGenerate(quiet){
+    const desc=document.getElementById('bDesc').value.trim()||('AI system for a '+selType+' company');
+    const email=document.getElementById('bEmail').value.trim();
+    const btn=document.getElementById('bGo');btn.disabled=true;btn.textContent='Building…';
+    const st=document.getElementById('bStages');
+    document.getElementById('bFlow').innerHTML='';document.getElementById('bResult').innerHTML='';
+    st.innerHTML=H_STAGES.map((s,i)=>'<div class="b-stage" id="bs'+i+'"><span class="tick" id="bt'+i+'">◌</span>'+s+'</div>').join('');
+    let i=0;const step=quiet?260:520;
+    const anim=setInterval(()=>{if(i<H_STAGES.length){const el=document.getElementById('bs'+i);if(el)el.classList.add('show');if(i>0)document.getElementById('bt'+(i-1)).textContent='✓';i++;}},step);
+    let spec=null;
+    try{
+      const r=await fetch(API_BASE+'/api/v1/builder/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({description:desc+' ('+selType+', goal: '+selGoal+')',email:email})});
+      if(r.status===429){clearInterval(anim);st.innerHTML='';toast('Builder limit reached — try again in an hour');btn.disabled=false;btn.textContent='⚡ Generate';return}
+      if(!r.ok)throw new Error(r.status);
+      spec=await r.json();
+    }catch(e){clearInterval(anim);st.innerHTML='';toast('Could not reach the builder — try again shortly');btn.disabled=false;btn.textContent='⚡ Generate';return}
+    const wait=setInterval(()=>{if(i>=H_STAGES.length){clearInterval(wait);clearInterval(anim);
+      const lt=document.getElementById('bt'+(H_STAGES.length-1));if(lt)lt.textContent='✓';
+      setTimeout(()=>{st.innerHTML='';bSpec=spec;renderFlow(spec);},320);
+      btn.disabled=false;btn.textContent='⚡ Generate';
+    }},180);
+  }
+  function nodeCard(i,ico,title,desc,key){return '<div class="fnode" id="fn'+i+'" onclick="openNode(\''+key+'\',this)"><span class="pulse"></span><div class="fi">'+ico+'</div><h5>'+title+'</h5><p>'+desc+'</p></div>';}
+  function renderFlow(s){
+    const p=s.business_profile||{};const g=GOAL_NODE[selGoal]||GOAL_NODE['Revive Dead Leads'];
+    const chans=[...new Set((s.revival_sequence||[]).map(x=>x.channel))].join(' + ')||'email';
+    const nodes=[
+      nodeCard(0,'📥','Lead Source','CSV import + CRM sync ('+esc(p.industry||selType)+')','source'),
+      nodeCard(1,'🎯','Scoring Agent','Dead Lead Score 0–100, deterministic','scoring'),
+      nodeCard(2,g[0].split(' ')[0],g[0].split(' ').slice(1).join(' '),g[1],'goal'),
+      nodeCard(3,'✉️','Outreach Sequence',(s.revival_sequence||[]).length+'-step · '+esc(chans),'sequence'),
+      nodeCard(4,'🗂','CRM Update','Status, tags & suppression sync','crm'),
+      nodeCard(5,'📊','Reports','Recovered-revenue ledger + daily brief','reports')
+    ];
+    const con='<div class="fcon">➜</div>';
+    document.getElementById('bFlow').innerHTML=
+      '<div class="glass glass-strong flow"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">'+
+      '<b style="font-family:var(--display);font-size:14px">'+esc(p.industry||selType)+' · '+esc(selGoal)+' system</b>'+
+      '<span style="font-family:var(--mono);font-size:12px;color:var(--signal)">● assembled · '+((p.estimated_dead_leads||0).toLocaleString())+' leads · est. '+fmtUSD(s.projected_recoverable_usd)+' recoverable</span></div>'+
+      '<div class="flow-lane">'+nodes.join(con)+'</div>'+
+      '<div class="fdetail" id="fDetail"></div>'+
+      '<div class="abar">'+
+      '<button class="btn btn-primary" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 12h6v10l10-10h-6z"/></svg>Deploy system</button>'+
+      '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export</button>'+
+      '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>Save project</button>'+
+      '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy prompts</button>'+
+      '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>Connect integrations</button>'+
+      '</div></div>';
+    let d=0;[0,1,2,3,4,5].forEach(n=>{setTimeout(()=>{const el=document.getElementById('fn'+n);if(el)el.classList.add('in')},d+=130)});
+    document.getElementById('bFlow').scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  function openNode(key,el){
+    document.querySelectorAll('.fnode').forEach(n=>n.classList.remove('sel'));el.classList.add('sel');
+    const s=bSpec||{};const p=s.business_profile||{},sc=s.scoring_config||{},kit=s.sell_kit||{};
+    const D=document.getElementById('fDetail');let h='';
+    if(key==='source')h='<b>Lead Source</b> — imports the client\'s dead-lead CSV or syncs their CRM. Industry: <b>'+esc(p.industry||selType)+'</b> · ~<b>'+((p.estimated_dead_leads||0).toLocaleString())+'</b> leads · avg deal <b>'+fmtUSD(p.est_avg_deal_value)+'</b>.';
+    else if(key==='scoring')h='<b>Scoring Agent</b> — '+esc(sc.model||'Dead Lead Score v2')+'. Decay half-life <b>'+(sc.decay_halflife_days||90)+' days</b>. Factors: <b>'+((sc.factors||[]).join(' × '))+'</b>. Every score is reproducible — no LLM guessing.';
+    else if(key==='goal')h='<b>'+esc(selGoal)+'</b> — this agent is configured from your prompt. Positioning angle: <b>'+esc(p.positioning_hook||'value-led check-in')+'</b>.';
+    else if(key==='sequence')h='<b>Outreach Sequence</b> (human-approved before sending):<br>'+(s.revival_sequence||[]).map(x=>'<div class="b-step"><span class="d">Day '+x.day+'</span><span><b>'+esc(x.channel)+'</b> — '+esc(x.angle)+'</span></div>').join('')+'<div class="b-msg" style="margin-top:10px">'+esc(s.sample_message||'')+'</div>';
+    else if(key==='crm')h='<b>CRM Update</b> — writes scores, tags, and revival status back; maintains the suppression list automatically (opt-outs honored instantly).';
+    else if(key==='reports')h='<b>Reports</b> — recovered-revenue ledger + daily executive brief. Your sell kit: retainer <b>'+esc(kit.suggested_retainer||'$500–$1,500/mo')+'</b> · pitch: <i style="font-family:var(--serif)">"'+esc(kit.pitch_opener||'')+'"</i>';
+    D.innerHTML=h;D.classList.add('open');
+  }
+  function unlock(){
+    const t=document.querySelector('#paywallOv h3');if(t)t.textContent='Unlock Your AI System';
+    const s=document.querySelector('#paywallOv .msub');if(s)s.textContent='Continue building, deploy your automation, save projects, and access premium templates.';
+    paywall();
+  }
+  function useTemplate(type,goal){selType=type;selGoal=goal;
+    chipRow('chipType',B_TYPES,selType,'setType');chipRow('chipGoal',B_GOALS,selGoal,'setGoal');writePrompt();
+    document.querySelector('.bh').scrollIntoView({behavior:'smooth'});setTimeout(()=>heroGenerate(false),450);
+  }
+
   async function builderRun(){
     const desc=document.getElementById('bDesc').value.trim();
     const email=document.getElementById('bEmail').value.trim();
