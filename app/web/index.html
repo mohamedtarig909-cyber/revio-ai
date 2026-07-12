@@ -339,7 +339,29 @@
   .fnode h5{font-family:var(--display);font-weight:700;font-size:13px;margin-bottom:3px}
   .fnode p{font-size:11px;color:var(--dim);line-height:1.4;margin:0}
   .fnode .pulse{position:absolute;top:10px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--signal);box-shadow:0 0 8px var(--signal);animation:pulse 2s infinite}
-  .fcon{display:flex;align-items:center;padding:0 4px;color:var(--signal);opacity:.6;font-size:16px;flex:0 0 auto}
+  .fcon{display:flex;align-items:center;padding:0 4px;color:var(--signal);opacity:.7;font-size:16px;flex:0 0 auto;position:relative;min-width:26px;justify-content:center}
+  .fcon::after{content:"";position:absolute;top:50%;left:0;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;background:var(--signal);box-shadow:0 0 8px var(--signal);animation:packet 1.4s linear infinite}
+  @keyframes packet{0%{left:0;opacity:0}25%{opacity:1}90%{opacity:1}100%{left:calc(100% - 5px);opacity:0}}
+  .flow3d{perspective:1400px}
+  .flow{transform-style:preserve-3d;transition:transform .25s ease-out;will-change:transform}
+  .fnode{animation:bob 5s ease-in-out infinite}
+  .fnode:nth-child(3){animation-delay:-1.2s}.fnode:nth-child(5){animation-delay:-2.4s}.fnode:nth-child(7){animation-delay:-3.4s}.fnode:nth-child(9){animation-delay:-4.2s}.fnode:nth-child(11){animation-delay:-2s}
+  @keyframes bob{0%,100%{margin-top:0}50%{margin-top:-5px}}
+  .vlink{display:flex;justify-content:center;gap:0;min-width:720px;height:22px;position:relative}
+  .vlink::before{content:"";position:absolute;top:0;left:8%;right:8%;height:1px;background:linear-gradient(90deg,transparent,rgba(45,212,191,.35),transparent)}
+  .vlink span{position:absolute;top:2px;color:var(--signal);font-size:11px;opacity:.6}
+  .flow-lane.infra{min-width:720px;margin-top:2px}
+  .flow-lane.infra .fnode{background:rgba(255,255,255,.02)}
+  .flow-lane.infra .fnode .fi{background:linear-gradient(135deg,rgba(167,139,250,.16),rgba(45,212,191,.12))}
+  .fmetrics{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;margin:18px 0 4px;font-family:var(--mono)}
+  .fmetrics .m{text-align:center}
+  .fmetrics .m b{display:block;font-family:var(--display);font-weight:600;font-size:22px;color:var(--text)}
+  .fmetrics .m span{font-size:11px;color:var(--dim);letter-spacing:.5px;text-transform:uppercase}
+  .chip-input{padding:7px 14px;border-radius:999px;border:1px solid var(--signal);background:rgba(255,255,255,.05);color:var(--text);font-size:13.5px;font-family:var(--font);outline:none;width:180px}
+  .fab{position:fixed;right:20px;bottom:20px;z-index:90;display:none;animation:riseIn .5s both}
+  .fab.show{display:block}
+  .fab .btn{box-shadow:0 14px 44px rgba(255,255,255,.25)}
+  .trustline{text-align:center;font-size:12.5px;color:var(--dim);margin-top:12px}
   .fdetail{margin-top:14px;padding:18px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--border);font-size:13.5px;color:var(--muted);display:none;animation:fade .3s}
   .fdetail.open{display:block}
   .fdetail b{color:var(--text)}
@@ -810,6 +832,8 @@
   </div>
 </div></div>
 
+<div class="fab" id="fab"><button class="btn btn-primary btn-lg" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 12h6v10l10-10h-6z"/></svg>Activate your system</button></div>
+
 <div class="toast glass" id="toast"></div>
 
 <script>
@@ -1111,12 +1135,19 @@
   function obFinish(){ obOv.classList.remove('open'); enterProduct(); }
 
   /* ── Interactive System Builder (state-driven; free preview → unlock) ── */
-  const B_TYPES=['HVAC','Solar','Plumbing','Roofing','Dental','Law Firm','Med Spa','Real Estate','Kitchen Remodeling','Auto Repair'];
-  const B_GOALS=['Revive Dead Leads','Book Appointments','Follow Up','Generate Leads','AI Receptionist','Missed Call Text Back','Review Collection','CRM Automation'];
-  const GOAL_NODE={'Revive Dead Leads':['🩺 Diagnosis Agent','Why each lead died'],'Book Appointments':['📅 Booking Agent','Routes hot replies to the calendar'],'Follow Up':['🔁 Follow-Up Agent','Persistent multi-touch cadence'],'Generate Leads':['🧲 Intake Agent','Captures + qualifies new inquiries'],'AI Receptionist':['☎️ Reception Agent','Answers + qualifies inbound'],'Missed Call Text Back':['📱 Text-Back Agent','Instant SMS on missed calls'],'Review Collection':['⭐ Review Agent','Requests reviews at the win moment'],'CRM Automation':['🗂 CRM Agent','Cleans, tags & syncs records']};
+  const B_TYPES=['HVAC','Solar','Plumbing','Roofing','Dental','Law Firm','Med Spa','Real Estate','Kitchen Remodeling','Auto Repair','Insurance','Mortgage','Landscaping','Pest Control','Fitness Studio','Chiropractor','Cleaning Services','E-commerce'];
+  const B_GOALS=['Revive Dead Leads','Book Appointments','Follow Up','Generate Leads','AI Receptionist','Missed Call Text Back','Review Collection','CRM Automation','Win-Back Customers','Speed-to-Lead','Referral Engine','Upsell Campaigns'];
+  const GOAL_NODE={'Revive Dead Leads':['🩺 Diagnosis Agent','Why each lead died'],'Book Appointments':['📅 Booking Agent','Routes hot replies to the calendar'],'Follow Up':['🔁 Follow-Up Agent','Persistent multi-touch cadence'],'Generate Leads':['🧲 Intake Agent','Captures + qualifies new inquiries'],'AI Receptionist':['☎️ Reception Agent','Answers + qualifies inbound'],'Missed Call Text Back':['📱 Text-Back Agent','Instant SMS on missed calls'],'Review Collection':['⭐ Review Agent','Requests reviews at the win moment'],'CRM Automation':['🗂 CRM Agent','Cleans, tags & syncs records'],'Win-Back Customers':['🔄 Win-Back Agent','Re-opens past customers showing buying signals'],'Speed-to-Lead':['⚡ Speed Agent','First touch in under 60 seconds'],'Referral Engine':['🤝 Referral Agent','Asks for intros at the win moment'],'Upsell Campaigns':['📈 Upsell Agent','Detects repurchase & expansion windows']};
   let selType='HVAC', selGoal='Revive Dead Leads', bSpec=null;
   function chipRow(id,items,sel,fn){const el=document.getElementById(id);if(!el)return;
-    el.innerHTML=items.map(x=>'<span class="chip'+(x===sel?' on':'')+'" onclick="'+fn+'(\''+x.replace(/'/g,"\\'")+'\')">'+x+'</span>').join('');}
+    const custom=!items.includes(sel)?'<span class="chip on" onclick="customChip(\''+id+'\',\''+fn+'\')">'+esc(sel)+'</span>':'';
+    el.innerHTML=items.map(x=>'<span class="chip'+(x===sel?' on':'')+'" onclick="'+fn+'(\''+x.replace(/'/g,"\\'")+'\')">'+x+'</span>').join('')+custom+
+      '<span class="chip" style="border-style:dashed" onclick="customChip(\''+id+'\',\''+fn+'\')">✏️ Your own…</span>';}
+  function customChip(id,fn){const el=document.getElementById(id);
+    const inp=document.createElement('input');inp.className='chip-input';inp.placeholder=id==='chipType'?'e.g. Pool Installation':'e.g. Quote Follow-Up';
+    el.appendChild(inp);inp.focus();
+    const commit=()=>{const v=inp.value.trim();if(v)window[fn](v.slice(0,40));else chipRow(id,id==='chipType'?B_TYPES:B_GOALS,id==='chipType'?selType:selGoal,fn);};
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter')commit()});inp.addEventListener('blur',commit);}
   function setType(t){selType=t;chipRow('chipType',B_TYPES,selType,'setType');writePrompt();if(bSpec)heroGenerate(true);}
   function setGoal(g){selGoal=g;chipRow('chipGoal',B_GOALS,selGoal,'setGoal');writePrompt();if(bSpec)heroGenerate(true);}
   function writePrompt(){const d=document.getElementById('bDesc');if(!d)return;
@@ -1148,8 +1179,9 @@
   }
   function nodeCard(i,ico,title,desc,key){return '<div class="fnode" id="fn'+i+'" onclick="openNode(\''+key+'\',this)"><span class="pulse"></span><div class="fi">'+ico+'</div><h5>'+title+'</h5><p>'+desc+'</p></div>';}
   function renderFlow(s){
-    const p=s.business_profile||{};const g=GOAL_NODE[selGoal]||GOAL_NODE['Revive Dead Leads'];
+    const p=s.business_profile||{};const g=GOAL_NODE[selGoal]||['🤖 '+selGoal+' Agent','Configured from your prompt'];
     const chans=[...new Set((s.revival_sequence||[]).map(x=>x.channel))].join(' + ')||'email';
+    const leads=(p.estimated_dead_leads||1500);
     const nodes=[
       nodeCard(0,'📥','Lead Source','CSV import + CRM sync ('+esc(p.industry||selType)+')','source'),
       nodeCard(1,'🎯','Scoring Agent','Dead Lead Score 0–100, deterministic','scoring'),
@@ -1158,12 +1190,21 @@
       nodeCard(4,'🗂','CRM Update','Status, tags & suppression sync','crm'),
       nodeCard(5,'📊','Reports','Recovered-revenue ledger + daily brief','reports')
     ];
+    const infra=[
+      nodeCard(6,'🛡','Suppression Guard','Opt-outs enforced before every send','guard'),
+      nodeCard(7,'⏱','Best-Window Timing','Per-cause re-contact windows','timing'),
+      nodeCard(8,'🧪','A/B Optimizer','Tests angles & timing, keeps winners','ab'),
+      nodeCard(9,'🧠','Business Memory','Learns what converts in this niche','memory')
+    ];
     const con='<div class="fcon">➜</div>';
     document.getElementById('bFlow').innerHTML=
-      '<div class="glass glass-strong flow"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">'+
+      '<div class="flow3d"><div class="glass glass-strong flow" id="flowBox"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">'+
       '<b style="font-family:var(--display);font-size:14px">'+esc(p.industry||selType)+' · '+esc(selGoal)+' system</b>'+
-      '<span style="font-family:var(--mono);font-size:12px;color:var(--signal)">● assembled · '+((p.estimated_dead_leads||0).toLocaleString())+' leads · est. '+fmtUSD(s.projected_recoverable_usd)+' recoverable</span></div>'+
+      '<span style="font-family:var(--mono);font-size:12px;color:var(--signal)">● assembled · deploy-ready</span></div>'+
+      '<div class="fmetrics"><div class="m"><b id="fm1">0</b><span>leads in system</span></div><div class="m"><b id="fm2">$0</b><span>est. recoverable</span></div><div class="m"><b id="fm3">0</b><span>AI agents live</span></div><div class="m"><b id="fm4">0%</b><span>human-approved sends</span></div></div>'+
       '<div class="flow-lane">'+nodes.join(con)+'</div>'+
+      '<div class="vlink"><span>⬇ policy & intelligence layer</span></div>'+
+      '<div class="flow-lane infra">'+infra.join('<div class="fcon" style="opacity:.35">·</div>')+'</div>'+
       '<div class="fdetail" id="fDetail"></div>'+
       '<div class="abar">'+
       '<button class="btn btn-primary" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 12h6v10l10-10h-6z"/></svg>Deploy system</button>'+
@@ -1171,10 +1212,19 @@
       '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>Save project</button>'+
       '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy prompts</button>'+
       '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>Connect integrations</button>'+
-      '</div></div>';
-    let d=0;[0,1,2,3,4,5].forEach(n=>{setTimeout(()=>{const el=document.getElementById('fn'+n);if(el)el.classList.add('in')},d+=130)});
+      '<div class="trustline">Founding pricing · 14-day trial · cancel anytime · nothing sends without your approval</div>'+
+      '</div></div></div>';
+    let d=0;[0,1,2,3,4,5,6,7,8,9].forEach(n=>{setTimeout(()=>{const el=document.getElementById('fn'+n);if(el)el.classList.add('in')},d+=110)});
+    countTo('fm1',leads,'', '');countTo('fm2',s.projected_recoverable_usd||0,'$','');
+    setTimeout(()=>{countTo('fm3',10,'','');countTo('fm4',100,'','%')},400);
+    const box=document.getElementById('flowBox'),wrap3=box.parentElement;
+    wrap3.addEventListener('mousemove',e=>{const r=wrap3.getBoundingClientRect();const px=(e.clientX-r.left)/r.width-.5,py=(e.clientY-r.top)/r.height-.5;box.style.transform='rotateX('+(-py*4)+'deg) rotateY('+(px*5)+'deg)'});
+    wrap3.addEventListener('mouseleave',()=>box.style.transform='rotateX(0) rotateY(0)');
+    const fab=document.getElementById('fab');if(fab)fab.classList.add('show');
     document.getElementById('bFlow').scrollIntoView({behavior:'smooth',block:'start'});
   }
+  function countTo(id,target,pre,suf){const el=document.getElementById(id);if(!el)return;const t0=performance.now(),dur=1200;
+    function tick(t){const p=Math.min((t-t0)/dur,1);const v=Math.floor((1-Math.pow(1-p,3))*target);el.textContent=pre+v.toLocaleString()+suf;if(p<1)requestAnimationFrame(tick)}requestAnimationFrame(tick)}
   function openNode(key,el){
     document.querySelectorAll('.fnode').forEach(n=>n.classList.remove('sel'));el.classList.add('sel');
     const s=bSpec||{};const p=s.business_profile||{},sc=s.scoring_config||{},kit=s.sell_kit||{};
@@ -1185,6 +1235,10 @@
     else if(key==='sequence')h='<b>Outreach Sequence</b> (human-approved before sending):<br>'+(s.revival_sequence||[]).map(x=>'<div class="b-step"><span class="d">Day '+x.day+'</span><span><b>'+esc(x.channel)+'</b> — '+esc(x.angle)+'</span></div>').join('')+'<div class="b-msg" style="margin-top:10px">'+esc(s.sample_message||'')+'</div>';
     else if(key==='crm')h='<b>CRM Update</b> — writes scores, tags, and revival status back; maintains the suppression list automatically (opt-outs honored instantly).';
     else if(key==='reports')h='<b>Reports</b> — recovered-revenue ledger + daily executive brief. Your sell kit: retainer <b>'+esc(kit.suggested_retainer||'$500–$1,500/mo')+'</b> · pitch: <i style="font-family:var(--serif)">"'+esc(kit.pitch_opener||'')+'"</i>';
+    else if(key==='guard')h='<b>Suppression Guard</b> — the policy layer. Every opt-out, bounce and complaint is suppressed instantly and checked <b>before every send</b>. CAN-SPAM / TCPA / GDPR aware — this is what keeps your clients (and you) safe.';
+    else if(key==='timing')h='<b>Best-Window Timing</b> — each cause of death has an optimal re-contact window (e.g. pricing objections convert best ~'+((bSpec&&bSpec.revival_sequence&&bSpec.revival_sequence.length>2)?'4–5 weeks':'28–35 days')+' after going cold). The system times every touch to it automatically.';
+    else if(key==='ab')h='<b>A/B Optimizer</b> — continuously tests angles, subject lines and send timing across the sequence, keeps statistical winners, and retires losers. The system gets sharper every campaign.';
+    else if(key==='memory')h='<b>Business Memory</b> — every outcome feeds back into the '+esc(selType)+' model: which causes revive, which angles convert, which windows hit. The longer it runs, the harder this system is to replicate.';
     D.innerHTML=h;D.classList.add('open');
   }
   function unlock(){
