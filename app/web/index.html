@@ -871,10 +871,21 @@
       const d=await r.json().catch(()=>({}));
       if(!r.ok){ toast(d.detail||'Google sign-in failed'); return; }
       AUTH_TOKEN=d.access_token; localStorage.setItem('revio_token',AUTH_TOKEN); localStorage.setItem('revio_email',d.email||'');
-      await checkSession(); closeAuth();
+      await checkSession(); await claimPending(); closeAuth();
       if(d.created){ openOnboarding(); toast('Welcome ✓'); }
       else { enterProduct(); toast('Signed in ✓'); }
     }catch(e){ toast('Could not reach the server'); }
+  }
+
+  /* Claim the system the visitor built in the hero into their workspace */
+  async function claimPending(){
+    let pend=null;try{pend=JSON.parse(localStorage.getItem('revio_pending_system')||'null')}catch(e){}
+    if(!pend||!pend.spec||!AUTH_TOKEN)return;
+    try{
+      const headers=await authHeaders({'Content-Type':'application/json'});
+      const r=await fetch(API_BASE+'/api/v1/systems/claim',{method:'POST',headers,body:JSON.stringify(pend)});
+      if(r.ok){localStorage.removeItem('revio_pending_system');toast('Your built system was saved to your workspace ✓');}
+    }catch(e){}
   }
 
   /* Gate: dashboard requires an ACTIVE subscription */
@@ -990,12 +1001,13 @@
     if(!AUTH_TOKEN){ setTxt('dashStatus','sign in to load your workspace'); const ta=document.getElementById('topActions'); if(ta)ta.innerHTML=uploadPrompt(); return; }
     try{
       const headers=await authHeaders();
-      const [ovR,leadsR,campR,healthR,logsR]=await Promise.all([
+      const [ovR,leadsR,campR,healthR,logsR,sysR]=await Promise.all([
         fetch(API_BASE+'/api/v1/dashboard/overview',{headers}),
         fetch(API_BASE+'/api/v1/leads?page=1&page_size=25',{headers}),
         fetch(API_BASE+'/api/v1/operations/campaigns',{headers}),
         fetch(API_BASE+'/api/v1/operations/pipeline/health',{headers}),
-        fetch(API_BASE+'/api/v1/operations/agent/logs',{headers})
+        fetch(API_BASE+'/api/v1/operations/agent/logs',{headers}),
+        fetch(API_BASE+'/api/v1/systems/mine',{headers})
       ]);
       if(ovR.status===401){setTxt('dashStatus','session expired — sign in again');return}
       if(ovR.status===402){backToSite();paywall();return}
@@ -1027,10 +1039,15 @@
         '<div class="kpi glass"><div class="k">Replies 24h</div><div class="v g" style="font-size:22px">'+ov.responses_24h+'</div></div>';
       let leads=[];
       if(leadsR.ok){const ld=await leadsR.json();leads=ld.items||[];}
+      let sysBanner='';
+      try{ if(sysR&&sysR.ok){const sd=(await sysR.json()).system;
+        if(sd){const sp=sd.spec&&sd.spec.spec?sd.spec.spec:(sd.spec||{});const bp=sp.business_profile||{};
+          sysBanner='<div class="action glass" style="border:1px solid rgba(45,212,191,.35)"><div class="ico" style="background:rgba(45,212,191,.15)">⚡</div><div class="body"><h4>Your built system: '+esc(sd.industry||bp.industry||'—')+' · '+esc(sd.goal||'')+'</h4><p>Assembled in the builder and saved to this workspace. Upload the client\'s CSV and hit Run AI scan to bring it to life'+(sp.projected_recoverable_usd?' — est. '+fmtUSD(sp.projected_recoverable_usd)+' recoverable':'')+'.</p></div><button class="btn btn-primary" onclick="runScan()">Upload CSV</button></div>';}
+      }}catch(e){}
       const ta=document.getElementById('topActions');
-      if(ta) ta.innerHTML = leads.length ? leads.slice(0,5).map(L=>
+      if(ta) ta.innerHTML = sysBanner + (leads.length ? leads.slice(0,5).map(L=>
         '<div class="action glass"><div class="ico" style="background:rgba(45,212,191,.15)">↻</div><div class="body"><h4>'+esc(L.full_name||L.email)+' · '+esc(L.company||'')+'</h4><p>Status: '+esc(L.lead_status)+' · deal '+fmtUSD(L.deal_value)+'</p><div class="meta"><span>priority <b>'+(L.priority_score!=null?L.priority_score:'—')+'</b></span></div></div></div>'
-      ).join('') : uploadPrompt();
+      ).join('') : (sysBanner?'' : uploadPrompt()));
       const ro=document.getElementById('revivableOut');
       if(ro) ro.innerHTML = leads.length ? renderLeads(leads) : 'Upload a CSV to import and score your leads.';
       const rep=ov.latest_report;
@@ -1090,7 +1107,7 @@
       const d=await r.json().catch(()=>({}));
       if(!r.ok){ toast(d.detail||('Sign-in failed ('+r.status+')')); return; }
       AUTH_TOKEN=d.access_token; localStorage.setItem('revio_token',AUTH_TOKEN); localStorage.setItem('revio_email',d.email||email);
-      await checkSession(); closeAuth();
+      await checkSession(); await claimPending(); closeAuth();
       if(authMode==='signup'){ openOnboarding(); toast('Account created ✓'); }
       else { enterProduct(); toast('Signed in ✓'); }
     }catch(err){ toast('Could not reach the server — is the backend live?'); }
@@ -1179,6 +1196,7 @@
   }
   function nodeCard(i,ico,title,desc,key){return '<div class="fnode" id="fn'+i+'" onclick="openNode(\''+key+'\',this)"><span class="pulse"></span><div class="fi">'+ico+'</div><h5>'+title+'</h5><p>'+desc+'</p></div>';}
   function renderFlow(s){
+    try{localStorage.setItem('revio_pending_system',JSON.stringify({spec:s,industry:selType,goal:selGoal}))}catch(e){}
     const p=s.business_profile||{};const g=GOAL_NODE[selGoal]||['🤖 '+selGoal+' Agent','Configured from your prompt'];
     const chans=[...new Set((s.revival_sequence||[]).map(x=>x.channel))].join(' + ')||'email';
     const leads=(p.estimated_dead_leads||1500);
