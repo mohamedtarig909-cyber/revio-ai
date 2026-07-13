@@ -48,8 +48,13 @@ class Settings(BaseSettings):
 
     llm_provider: Literal["openai", "anthropic"] = "openai"
     openai_api_key: str = ""
+    # OpenAI-compatible gateway base. For OpenRouter set:
+    #   OPENAI_BASE_URL=https://openrouter.ai/api/v1
+    #   OPENAI_API_KEY=sk-or-...   LLM_MODEL=openai/gpt-4o  LLM_MODEL_SMALL=openai/gpt-4o-mini
+    openai_base_url: str = "https://api.openai.com/v1"
     anthropic_api_key: str = ""
     llm_model: str = "gpt-4o"
+    llm_model_small: str = "gpt-4o-mini"   # cheap tasks (builder previews, classification)
 
     sendgrid_api_key: str = ""
     sendgrid_from_email: str = "revive@revio.ai"

@@ -28,8 +28,10 @@ logger = logging.getLogger(__name__)
 # Config
 # ---------------------------------------------------------------------------
 
-OPENAI_API_BASE = "https://api.openai.com/v1"
-DEFAULT_MODEL = "gpt-4o"
+from app.config import get_settings
+
+OPENAI_API_BASE = get_settings().openai_base_url.rstrip("/")
+DEFAULT_MODEL = get_settings().llm_model
 CONFIDENCE_THRESHOLD = 0.80
 MAX_ITERATIONS = 5
 ITERATION_TIMEOUT_SECONDS = 30

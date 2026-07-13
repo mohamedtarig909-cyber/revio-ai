@@ -152,9 +152,9 @@ async def _llm_spec(description: str) -> dict | None:
     try:
         async with httpx.AsyncClient(timeout=25) as client:
             r = await client.post(
-                "https://api.openai.com/v1/chat/completions",
+                settings.openai_base_url.rstrip("/") + "/chat/completions",
                 headers={"Authorization": f"Bearer {settings.openai_api_key}"},
-                json={"model": "gpt-4o-mini", "max_tokens": 900, "temperature": 0.4,
+                json={"model": settings.llm_model_small, "max_tokens": 900, "temperature": 0.4,
                       "response_format": {"type": "json_object"},
                       "messages": [{"role": "user", "content": prompt}]},
             )

@@ -21,7 +21,8 @@ class LLMService:
         self._anthropic: Anthropic | None = None
 
         if self.provider == "openai" and settings.openai_api_key:
-            self._openai = OpenAI(api_key=settings.openai_api_key)
+            self._openai = OpenAI(api_key=settings.openai_api_key,
+                                  base_url=settings.openai_base_url)
         elif self.provider == "anthropic" and settings.anthropic_api_key:
             self._anthropic = Anthropic(api_key=settings.anthropic_api_key)
 
