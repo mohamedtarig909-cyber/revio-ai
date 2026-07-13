@@ -26,12 +26,51 @@ _WHOP_REVOKE = {"membership.went_invalid", "membership_went_invalid",
                 "membership.cancelled", "membership.expired"}
 
 
-def _verify_whop_signature(body: bytes, signature: str) -> bool:
-    if not settings.whop_webhook_secret:
+def _verify_whop(headers, body: bytes) -> bool:
+    """Accept either signing style:
+    A) x-whop-signature: sha256=<hex hmac of raw body>
+    B) Standard Webhooks (Svix-style): webhook-id / webhook-timestamp /
+       webhook-signature: "v1,<base64>" over "id.timestamp.body", secret
+       optionally prefixed "whsec_" (base64-encoded key).
+    """
+    import base64
+
+    secret = (settings.whop_webhook_secret or "").strip()
+    if not secret:
         return True   # not configured (dev) — accept
-    expected = hmac.new(settings.whop_webhook_secret.encode(), body, hashlib.sha256).hexdigest()
-    got = (signature or "").split(",")[-1].replace("sha256=", "").strip()
-    return hmac.compare_digest(expected, got)
+
+    # --- Scheme A: hex HMAC of the raw body ---
+    sig_a = (headers.get("x-whop-signature") or headers.get("whop-signature")
+             or headers.get("x-whop-webhook-signature") or "")
+    if sig_a:
+        expected = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+        got = sig_a.split(",")[-1].replace("sha256=", "").strip()
+        if got and hmac.compare_digest(expected, got):
+            return True
+
+    # --- Scheme B: Standard Webhooks ---
+    msg_id = headers.get("webhook-id") or headers.get("svix-id") or ""
+    ts = headers.get("webhook-timestamp") or headers.get("svix-timestamp") or ""
+    sig_b = headers.get("webhook-signature") or headers.get("svix-signature") or ""
+    if msg_id and ts and sig_b:
+        keys: list[bytes] = [secret.encode()]
+        if secret.startswith("whsec_"):
+            try:
+                keys.insert(0, base64.b64decode(secret[6:] + "=" * (-len(secret[6:]) % 4)))
+            except Exception:  # noqa: BLE001
+                pass
+        signed = f"{msg_id}.{ts}.".encode() + body
+        for key in keys:
+            expected_b = base64.b64encode(hmac.new(key, signed, hashlib.sha256).digest()).decode()
+            for part in sig_b.split(" "):
+                cand = part.split(",", 1)[-1].strip()
+                if cand and hmac.compare_digest(expected_b, cand):
+                    return True
+
+    # Diagnostics: header names only + signature previews (no secrets).
+    logger.warning("[whop] signature mismatch. headers=%s sigA=%r sigB=%r id=%r ts=%r",
+                   sorted(headers.keys()), sig_a[:24], sig_b[:32], msg_id[:20], ts[:20])
+    return False
 
 
 @whop_router.post("/webhook")
@@ -48,10 +87,7 @@ async def whop_webhook(request: Request):
     from app.db.models.user import User
 
     body = await request.body()
-    signature = (request.headers.get("x-whop-signature")
-                 or request.headers.get("whop-signature")
-                 or request.headers.get("x-whop-webhook-signature") or "")
-    if not _verify_whop_signature(body, signature):
+    if not _verify_whop(request.headers, body):
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
 
     try:
