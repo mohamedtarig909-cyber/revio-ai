@@ -218,8 +218,10 @@
   /* pricing */
   .prices{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
   .price{padding:34px;border-radius:22px;display:flex;flex-direction:column;position:relative}
-  .price.pop{border:1px solid rgba(45,212,191,.4);box-shadow:0 16px 60px var(--glow)}
-  .price.pop::before{content:"MOST POPULAR";position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--signal),var(--signal-2));color:#04201C;font-size:10.5px;font-weight:700;padding:5px 14px;border-radius:999px;font-family:var(--mono);letter-spacing:.5px}
+  .price.pop{box-shadow:0 16px 60px rgba(45,212,191,.14),inset 0 1px 1px rgba(255,255,255,.18);transform:scale(1.03)}
+  .price.pop::after{content:"MOST POPULAR";position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--signal),var(--signal-2));color:#04201C;font-size:10.5px;font-weight:700;padding:5px 14px;border-radius:999px;font-family:var(--mono);letter-spacing:.5px;white-space:nowrap}
+  .guarantee{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:22px;color:var(--muted);font-size:13.5px}
+  .guarantee b{color:var(--text)}
   .price .tag{font-family:var(--mono);font-size:12px;color:var(--signal);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
   .price .amt{font-family:var(--display);font-size:46px;font-weight:900;letter-spacing:-2px}
   .price .amt small{font-size:15px;color:var(--dim);font-weight:400;letter-spacing:0}
@@ -612,43 +614,51 @@
   <h2>Pays for itself with <span class="serif-accent">one recovered deal.</span></h2>
   <p class="lead">Every feature live. 14-day trial · cancel anytime · secure checkout via Whop.</p>
   <div class="prices">
-    <div class="price glass"><div class="tag">Starter</div><div class="amt">$149<small>/mo</small></div>
+    <div class="price glass pop"><div class="tag">Starter</div><div class="amt">$149<small>/mo</small></div>
       <ul>
         <li>Up to <b style="color:var(--text)">2,500</b> leads / mo</li>
-        <li>Resurrection scoring engine</li>
-        <li>Why-it-died AI diagnosis</li>
-        <li>AI message generation</li>
-        <li>Email outreach (approval mode)</li>
-        <li>Recovered-revenue tracking</li>
-        <li>Daily revival digest to your inbox</li>
-        <li>1 industry model · CSV import</li>
+        <li><b style="color:var(--text)">Unlimited</b> System Builder generations</li>
+        <li>Resurrection scoring engine (0–100, auditable)</li>
+        <li>Why-it-died AI diagnosis on every lead</li>
+        <li>AI revival messages written per lead</li>
+        <li>Email outreach — you approve every send</li>
+        <li>Run AI scan on demand, 24/7</li>
+        <li>Recovered-revenue tracking (your ROI proof)</li>
+        <li>Daily revival digest + agent activity log</li>
+        <li>Suppression & opt-out protection built in</li>
+        <li>Client sell kit: pitch script + ROI one-pager</li>
+        <li>CSV import · 1 client workspace</li>
       </ul>
-      <button class="btn btn-ghost" data-plan="starter" onclick="checkout(this)">Get started</button></div>
-    <div class="price glass pop"><div class="tag">Growth</div><div class="amt">$399<small>/mo</small></div>
+      <button class="btn btn-primary" data-plan="starter" onclick="checkout(this)">Get started →</button></div>
+    <div class="price glass"><div class="tag">Growth</div><div class="amt">$399<small>/mo</small></div>
       <ul>
         <li>Up to <b style="color:var(--text)">15,000</b> leads / mo</li>
         <li>Everything in Starter, plus:</li>
-        <li>Multi-channel: email + SMS</li>
-        <li>Best-window send timing</li>
-        <li>Lead decay radar + win-back engine</li>
+        <li>Multi-channel sequences: email + SMS</li>
+        <li>Best-window timing per cause of death</li>
+        <li>Lead decay radar — catch them before they die</li>
+        <li>Win-back engine for past customers</li>
         <li>A/B testing: auto-optimizes copy & timing</li>
         <li>CRM sync (HubSpot, Salesforce)</li>
-        <li>3 industry models · 5 team seats</li>
+        <li>Save unlimited client systems</li>
+        <li>All industry models · 5 team seats</li>
       </ul>
-      <button class="btn btn-primary" data-plan="growth" onclick="checkout(this)">Get started</button></div>
+      <button class="btn btn-ghost" data-plan="growth" onclick="checkout(this)">Get started</button></div>
     <div class="price glass"><div class="tag">Scale</div><div class="amt">$899<small>/mo</small></div>
       <ul>
         <li>Up to <b style="color:var(--text)">75,000</b> leads / mo</li>
         <li>Everything in Growth, plus:</li>
         <li>All 6 engines + WhatsApp</li>
-        <li>Pattern discovery + benchmarks</li>
+        <li>Pattern discovery + industry benchmarks</li>
         <li>Institutional memory: ask "why are leads dying?"</li>
-        <li>Unlimited seats + RBAC</li>
+        <li>Unlimited seats + role-based access</li>
         <li>Audit log & data export</li>
-        <li>Priority support + onboarding</li>
+        <li>Priority support + white-glove onboarding</li>
+        <li>Early access to new AI agents</li>
       </ul>
       <button class="btn btn-ghost" data-plan="scale" onclick="checkout(this)">Get started</button></div>
   </div>
+  <div class="guarantee">🛡 <span><b>14-day money-back guarantee</b> — if Revio doesn't surface revivable revenue in your list, you don't pay.</span></div>
 </div></section>
 
 <section id="faq" class="reveal"><div class="wrap">
