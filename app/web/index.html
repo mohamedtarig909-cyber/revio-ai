@@ -288,23 +288,33 @@
 
   /* command center (gated) */
   #app{display:none;position:relative;z-index:2}
-  .dash{display:grid;grid-template-columns:240px 1fr;min-height:620px;border-radius:22px;overflow:hidden}
+  .dash{display:grid;grid-template-columns:240px 1fr;min-height:640px;border-radius:24px;overflow:hidden}
+  #dashStatus{font-size:11px!important;letter-spacing:.4px;color:var(--signal)!important;background:rgba(45,212,191,.07);border:1px solid rgba(45,212,191,.18);padding:5px 11px;border-radius:8px;display:inline-block;margin-top:8px}
   .side{background:var(--glass);border-right:1px solid var(--border);padding:24px 14px}
-  .side .grp{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin:18px 10px 8px;font-family:var(--mono)}
-  .navitem{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:11px;color:var(--muted);font-size:14px;cursor:pointer;transition:.15s;font-weight:500}
+  .side .grp{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin:22px 12px 8px;font-family:var(--mono)}
+  .side-card{padding:14px;border-radius:12px;margin-top:20px;font-size:12px;display:none}
+  .navitem{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:9px;border-left:2px solid transparent;color:var(--muted);font-size:13.5px;cursor:pointer;transition:all .18s;font-weight:500}
+  .navitem:hover{padding-left:16px}
   .navitem:hover{background:rgba(255,255,255,.05);color:var(--text)}
-  .navitem.active{background:rgba(45,212,191,.12);color:var(--signal)}
-  .main{padding:30px 32px;background:var(--bg-2)}
+  .navitem.active{background:rgba(45,212,191,.07);border-left-color:var(--signal);color:var(--text)}
+  .main{padding:28px 32px;background:linear-gradient(180deg,rgba(255,255,255,.02),transparent 140px),var(--bg-2)}
+  .panel>h2{padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:20px}
+  .flow::-webkit-scrollbar{height:8px}
+  .flow::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px}
+  .flow::-webkit-scrollbar-track{background:transparent}
   .main h2{text-align:left;font-size:27px;margin-bottom:4px}
   .panel{display:none;animation:fade .35s ease}
   .panel.active{display:block}
   .cards4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:22px 0}
-  .kpi{padding:18px;border-radius:14px}
-  .kpi .k{font-size:12.5px;color:var(--muted);margin-bottom:8px}
-  .kpi .v{font-family:var(--display);font-size:30px;font-weight:900}
+  .kpi{padding:20px;border-radius:16px;position:relative;overflow:hidden;transition:transform .2s}
+  .kpi:hover{transform:translateY(-3px)}
+  .kpi::after{content:"";position:absolute;top:0;left:0;width:44%;height:2px;background:linear-gradient(90deg,var(--signal),transparent)}
+  .kpi .k{font-family:var(--mono);font-size:10.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--dim);margin-bottom:9px}
+  .kpi .v{font-family:var(--display);font-size:31px;font-weight:600;letter-spacing:-1px}
   .kpi .v.t{color:var(--signal)} .kpi .v.g{color:var(--gold)}
   .kpi .s{font-size:12px;color:var(--dim);margin-top:4px}
-  .action{padding:18px;border-radius:13px;margin-bottom:12px;display:flex;gap:16px;align-items:center}
+  .action{padding:18px 20px;border-radius:15px;margin-bottom:12px;display:flex;gap:16px;align-items:center;transition:transform .2s,border-color .2s}
+  .action:hover{transform:translateX(4px)}
   .action .ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;flex-shrink:0}
   .action .body{flex:1} .action h4{font-family:var(--display);font-weight:700;font-size:15.5px;margin-bottom:5px}
   .action p{font-size:13.5px;color:var(--muted)}
@@ -730,7 +740,8 @@
       <div class="grp">Settings</div>
       <div class="navitem" data-p="integrations" onclick="nav(this)">🔌 Integrations</div>
       <div class="navitem" data-p="billing" onclick="nav(this)">◔ Team &amp; billing</div>
-      <button class="btn btn-ghost" style="width:100%;margin-top:24px;justify-content:center" onclick="backToSite()">← Back to site</button>
+      <div class="side-card glass" id="sideCard"></div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:14px;justify-content:center" onclick="backToSite()">← Back to site</button>
     </aside>
     <div class="main">
       <div class="panel active" data-panel="center">
@@ -985,7 +996,10 @@
 
   /* command center (gated) */
   let previewMode=false;
-  function launchApp(){previewMode=false;try{pvRestore()}catch(e){};site.style.display='none';app.style.display='block';scrollTo(0,0);loadDashboard()}
+  function launchApp(){previewMode=false;try{pvRestore()}catch(e){};site.style.display='none';app.style.display='block';scrollTo(0,0);
+    const sc=document.getElementById('sideCard');
+    if(sc&&currentUser){sc.style.display='block';sc.innerHTML='<b style="font-family:var(--display);font-size:12.5px;color:var(--text)">'+(currentUser.company||'Your workspace')+'</b><p style="color:var(--dim);margin:5px 0 0;font-size:11.5px">Plan: '+(currentUser.subscription_status||'trial')+'</p>';}
+    loadDashboard()}
   function backToSite(){app.style.display='none';site.style.display='block'}
   function nav(el){document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));el.classList.add('active');const p=el.dataset.p;document.querySelectorAll('.panel').forEach(pn=>pn.classList.toggle('active',pn.dataset.panel===p))}
 
@@ -1310,6 +1324,8 @@
     const s=bSpec,p=s.business_profile||{},m=s.the_math||{},kit=s.sell_kit||{};
     setTxt('dashStatus','PREVIEW · '+(p.industry||selType)+' · '+(p.goal||selGoal)+' system, assembled from your prompt');
     const fb=document.getElementById('fab');if(fb)fb.classList.remove('show');
+    const sc=document.getElementById('sideCard');
+    if(sc){sc.style.display='block';sc.innerHTML='<b style="font-family:var(--display);font-size:12.5px;color:var(--text)">Preview mode</b><p style="color:var(--dim);margin:6px 0 10px;font-size:11.5px;line-height:1.5">Your blueprint is loaded. Activate to run it on your real list.</p><button class="btn btn-primary" style="width:100%;justify-content:center;padding:9px;font-size:12.5px" onclick="unlock()">Activate →</button>';}
     const lf=document.getElementById('bFlow');if(lf)lf.innerHTML='';
     const lr=document.getElementById('bResult');if(lr)lr.innerHTML='';
     const bh=document.getElementById('boardHost');
