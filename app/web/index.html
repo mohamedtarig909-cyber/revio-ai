@@ -1196,7 +1196,7 @@
     const email=document.getElementById('bEmail').value.trim();
     const btn=document.getElementById('bGo');btn.disabled=true;btn.textContent='Building…';
     const st=document.getElementById('bStages');
-    document.getElementById(target||'bFlow').innerHTML='';document.getElementById('bResult').innerHTML='';
+    document.getElementById('bFlow').innerHTML='';document.getElementById('bResult').innerHTML='';
     st.innerHTML=H_STAGES.map((s,i)=>'<div class="b-stage" id="bs'+i+'"><span class="tick" id="bt'+i+'">◌</span>'+s+'</div>').join('');
     let i=0;const step=quiet?260:520;
     const anim=setInterval(()=>{if(i<H_STAGES.length){const el=document.getElementById('bs'+i);if(el)el.classList.add('show');if(i>0)document.getElementById('bt'+(i-1)).textContent='✓';i++;}},step);
@@ -1237,7 +1237,7 @@
       nodeCard(9,'🧠','Business Memory','Learns what converts in this niche','memory')
     ];
     const con='<div class="fcon">➜</div>';
-    document.getElementById('bFlow').innerHTML=
+    document.getElementById(target||'bFlow').innerHTML=
       '<div class="flow3d"><div class="glass glass-strong flow" id="flowBox"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">'+
       '<b style="font-family:var(--display);font-size:14px">'+esc(p.industry||selType)+' · '+esc(selGoal)+' system</b>'+
       '<span style="font-family:var(--mono);font-size:12px;color:var(--signal)">● assembled · deploy-ready</span></div>'+
