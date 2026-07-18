@@ -81,9 +81,26 @@ async def guide_page():
     return FileResponse(WEB_DIR / "guide.html")
 
 
+from app.api.routes.seo_pages import router as seo_router  # noqa: E402
+app.include_router(seo_router)
+
+
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap():
-    return FileResponse(WEB_DIR / "sitemap.xml", media_type="application/xml")
+    from fastapi.responses import Response
+    from app.api.routes.seo_pages import SLUGS
+    base = "https://revioai.site"
+    urls = [
+        (f"{base}/", "1.0", "weekly"),
+        (f"{base}/compare", "0.8", "monthly"),
+        (f"{base}/database-reactivation", "0.9", "monthly"),
+    ]
+    urls += [(f"{base}/revive/{slug}", "0.8", "monthly") for slug in SLUGS]
+    body = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    for loc, pr, cf in urls:
+        body += f"  <url><loc>{loc}</loc><changefreq>{cf}</changefreq><priority>{pr}</priority></url>\n"
+    body += "</urlset>\n"
+    return Response(content=body, media_type="application/xml")
 
 
 @app.get("/health")
