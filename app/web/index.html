@@ -1086,7 +1086,17 @@
       let sysBanner='';
       try{ if(sysR&&sysR.ok){const sd=(await sysR.json()).system;
         if(sd){const sp=sd.spec&&sd.spec.spec?sd.spec.spec:(sd.spec||{});const bp=sp.business_profile||{};
-          sysBanner='<div class="action glass" style="border:1px solid rgba(45,212,191,.35)"><div class="ico" style="background:rgba(45,212,191,.15)">⚡</div><div class="body"><h4>Your built system: '+esc(sd.industry||bp.industry||'—')+' · '+esc(sd.goal||'')+'</h4><p>Assembled in the builder and saved to this workspace. Upload the client\'s CSV and hit Run AI scan to bring it to life'+(sp.projected_recoverable_usd?', est. '+fmtUSD(sp.projected_recoverable_usd)+' recoverable':'')+'.</p></div><button class="btn btn-primary" onclick="runScan()">Upload CSV</button></div>';}
+          sysBanner='<div class="action glass" style="border:1px solid rgba(45,212,191,.35)"><div class="ico" style="background:rgba(45,212,191,.15)">⚡</div><div class="body"><h4>Your built system: '+esc(sd.industry||bp.industry||'—')+' · '+esc(sd.goal||'')+'</h4><p>Assembled in the builder and saved to this workspace. Upload the client\'s CSV and hit Run AI scan to bring it to life'+(sp.projected_recoverable_usd?', est. '+fmtUSD(sp.projected_recoverable_usd)+' recoverable':'')+'.</p></div><button class="btn btn-primary" onclick="runScan()">Upload CSV</button></div>';
+          /* Render the saved system into the actual System board tab */
+          if(sp&&(sp.business_profile||sp.revival_sequence)){
+            const bh=document.getElementById('boardHost');
+            if(bh){bh.innerHTML='';
+              selType=sd.industry||bp.industry||selType;selGoal=sd.goal||bp.goal||selGoal;
+              try{renderFlow(sp,'boardHost');}catch(e){}
+              /* renderFlow re-stages a pending_system; this one is already claimed, so clear it */
+              try{localStorage.removeItem('revio_pending_system');}catch(e){}
+              const bhint=document.getElementById('boardHint');
+              if(bhint)bhint.textContent='Your '+(sd.industry||bp.industry||'')+' revival system, saved from the builder. Click any node to inspect it.';}}}
       }}catch(e){}
       const ta=document.getElementById('topActions');
       if(ta) ta.innerHTML = sysBanner + (leads.length ? leads.slice(0,5).map(L=>
