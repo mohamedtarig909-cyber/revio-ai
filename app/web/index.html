@@ -349,7 +349,14 @@
   .fnode p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .fnode.run{border-color:var(--signal);box-shadow:0 0 0 1px var(--signal),0 10px 34px rgba(45,212,191,.22)}
   .sim-chip{margin-top:9px;font-family:var(--mono);font-size:10.5px;color:var(--signal);background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.2);border-radius:7px;padding:3px 7px;display:none}
-  .fnode.run .sim-chip,.fnode.done .sim-chip{display:inline-block}
+  .fnode.run .sim-chip,.fnode.done .sim-chip,.fnode.live .sim-chip{display:inline-block}
+  .fnode.live{border-color:rgba(45,212,191,.3)}
+  .flegend{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:0 0 16px;font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.4px}
+  .flegend .lg{display:inline-flex;align-items:center;gap:6px}
+  .flegend .lg::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--signal)}
+  .flegend .lg.p::before{background:var(--violet)}
+  .flegend .lg.live{color:var(--signal)}.flegend .lg.live::before{display:none}
+  .flegend .lg.dim::before{display:none}
   .fnode.done{border-color:rgba(45,212,191,.35)}
   .fnode.in{opacity:1;transform:none}
   .fnode:hover{border-color:var(--signal);transform:translateY(-3px)}
@@ -1092,7 +1099,8 @@
             const bh=document.getElementById('boardHost');
             if(bh){bh.innerHTML='';
               selType=sd.industry||bp.industry||selType;selGoal=sd.goal||bp.goal||selGoal;
-              try{renderFlow(sp,'boardHost');}catch(e){}
+              const live={total_leads:ov.total_leads,dormant_leads:ov.dormant_leads,reactivated_leads:ov.reactivated_leads,campaigns_sent_24h:ov.campaigns_sent_24h,responses_24h:ov.responses_24h,revenue_at_risk:ov.revenue_at_risk,health:ov.pipeline_health_score};
+              try{renderFlow(sp,'boardHost',live);}catch(e){}
               /* renderFlow re-stages a pending_system; this one is already claimed, so clear it */
               try{localStorage.removeItem('revio_pending_system');}catch(e){}
               const bhint=document.getElementById('boardHint');
@@ -1209,7 +1217,7 @@
   const B_TYPES=['HVAC','Solar','Plumbing','Roofing','Dental','Law Firm','Med Spa','Real Estate','Kitchen Remodeling','Auto Repair','Insurance','Mortgage','Landscaping','Pest Control','Fitness Studio','Chiropractor','Cleaning Services','E-commerce'];
   const B_GOALS=['Revive Dead Leads','Book Appointments','Follow Up','Generate Leads','AI Receptionist','Missed Call Text Back','Review Collection','CRM Automation','Win-Back Customers','Speed-to-Lead','Referral Engine','Upsell Campaigns'];
   const GOAL_NODE={'Revive Dead Leads':['🩺 Diagnosis Agent','Why each lead died'],'Book Appointments':['📅 Booking Agent','Routes hot replies to the calendar'],'Follow Up':['🔁 Follow-Up Agent','Persistent multi-touch cadence'],'Generate Leads':['🧲 Intake Agent','Captures + qualifies new inquiries'],'AI Receptionist':['☎️ Reception Agent','Answers + qualifies inbound'],'Missed Call Text Back':['📱 Text-Back Agent','Instant SMS on missed calls'],'Review Collection':['⭐ Review Agent','Requests reviews at the win moment'],'CRM Automation':['🗂 CRM Agent','Cleans, tags & syncs records'],'Win-Back Customers':['🔄 Win-Back Agent','Re-opens past customers showing buying signals'],'Speed-to-Lead':['⚡ Speed Agent','First touch in under 60 seconds'],'Referral Engine':['🤝 Referral Agent','Asks for intros at the win moment'],'Upsell Campaigns':['📈 Upsell Agent','Detects repurchase & expansion windows']};
-  let selType='HVAC', selGoal='Revive Dead Leads', bSpec=null;
+  let selType='HVAC', selGoal='Revive Dead Leads', bSpec=null, boardSpec=null;
   function chipRow(id,items,sel,fn){const el=document.getElementById(id);if(!el)return;
     const custom=!items.includes(sel)?'<span class="chip on" onclick="customChip(\''+id+'\',\''+fn+'\')">'+esc(sel)+'</span>':'';
     el.innerHTML=items.map(x=>'<span class="chip'+(x===sel?' on':'')+'" onclick="'+fn+'(\''+x.replace(/'/g,"\\'")+'\')">'+x+'</span>').join('')+custom+
@@ -1250,47 +1258,73 @@
       btn.disabled=false;btn.textContent='⚡ Generate';
     }},180);
   }
-  function nodeCard(i,ico,title,desc,key){return '<div class="fnode" id="fn'+i+'" onclick="openNode(\''+key+'\',this)"><span class="pulse"></span><div class="fi">'+ico+'</div><h5>'+title+'</h5><p>'+desc+'</p><span class="sim-chip" id="fs'+i+'"></span></div>';}
-  function renderFlow(s,target){
+  function nodeCard(i,ico,title,desc,key,stat){return '<div class="fnode'+(stat?' live':'')+'" id="fn'+i+'" onclick="openNode(\''+key+'\',this)"><span class="pulse"></span><div class="fi">'+ico+'</div><h5>'+title+'</h5><p>'+desc+'</p><span class="sim-chip" id="fs'+i+'">'+(stat||'')+'</span></div>';}
+  function renderFlow(s,target,live){
     const isBoard=!!(target&&target!=='bFlow');
-    try{localStorage.setItem('revio_pending_system',JSON.stringify({spec:s,industry:selType,goal:selGoal}))}catch(e){}
+    const isLive=!!live; const L=live||{};
+    boardSpec=s;                       // remember the rendered spec for simRun / openNode
+    if(!isLive){try{localStorage.setItem('revio_pending_system',JSON.stringify({spec:s,industry:selType,goal:selGoal}))}catch(e){}}
     const p=s.business_profile||{};const g=GOAL_NODE[selGoal]||['🤖 '+selGoal+' Agent','Configured from your prompt'];
     const chans=[...new Set((s.revival_sequence||[]).map(x=>x.channel))].join(' + ')||'email';
     const leads=(p.estimated_dead_leads||1500);
+    /* live per-node stats, real numbers from the client's workspace */
+    const st=isLive?[
+      (L.total_leads||0).toLocaleString()+' imported',
+      (L.dormant_leads||0).toLocaleString()+' scored',
+      (L.reactivated_leads||0).toLocaleString()+' reactivated',
+      (L.campaigns_sent_24h||0)+' sent · '+(L.responses_24h||0)+' replies',
+      (L.total_leads||0).toLocaleString()+' synced',
+      fmtUSD(L.revenue_at_risk||0)+' tracked'
+    ]:[];
+    const infraSt=isLive?['● enforcing','● scheduling','● optimizing','● learning']:[];
     const nodes=[
-      nodeCard(0,'📥','Lead Source','CSV import + CRM sync ('+esc(p.industry||selType)+')','source'),
-      nodeCard(1,'🎯','Scoring Agent','Dead Lead Score 0–100, deterministic','scoring'),
-      nodeCard(2,g[0].split(' ')[0],g[0].split(' ').slice(1).join(' '),g[1],'goal'),
-      nodeCard(3,'✉️','Outreach Sequence',(s.revival_sequence||[]).length+'-step · '+esc(chans),'sequence'),
-      nodeCard(4,'🗂','CRM Update','Status, tags & suppression sync','crm'),
-      nodeCard(5,'📊','Reports','Recovered-revenue ledger + daily brief','reports')
+      nodeCard(0,'📥','Lead Source','CSV import + CRM sync ('+esc(p.industry||selType)+')','source',st[0]),
+      nodeCard(1,'🎯','Scoring Agent','Dead Lead Score 0–100, deterministic','scoring',st[1]),
+      nodeCard(2,g[0].split(' ')[0],g[0].split(' ').slice(1).join(' '),g[1],'goal',st[2]),
+      nodeCard(3,'✉️','Outreach Sequence',(s.revival_sequence||[]).length+'-step · '+esc(chans),'sequence',st[3]),
+      nodeCard(4,'🗂','CRM Update','Status, tags & suppression sync','crm',st[4]),
+      nodeCard(5,'📊','Reports','Recovered-revenue ledger + daily brief','reports',st[5])
     ];
     const infra=[
-      nodeCard(6,'🛡','Suppression Guard','Opt-outs enforced before every send','guard'),
-      nodeCard(7,'⏱','Best-Window Timing','Per-cause re-contact windows','timing'),
-      nodeCard(8,'🧪','A/B Optimizer','Tests angles & timing, keeps winners','ab'),
-      nodeCard(9,'🧠','Business Memory','Learns what converts in this niche','memory')
+      nodeCard(6,'🛡','Suppression Guard','Opt-outs enforced before every send','guard',infraSt[0]),
+      nodeCard(7,'⏱','Best-Window Timing','Per-cause re-contact windows','timing',infraSt[1]),
+      nodeCard(8,'🧪','A/B Optimizer','Tests angles & timing, keeps winners','ab',infraSt[2]),
+      nodeCard(9,'🧠','Business Memory','Learns what converts in this niche','memory',infraSt[3])
     ];
     const con='<div class="fcon">➜</div>';
+    const statusHTML=isLive
+      ? '<span style="font-family:var(--mono);font-size:12px;color:var(--signal)">● Live · '+(L.total_leads||0).toLocaleString()+' leads · health '+(L.health!=null?Math.round(L.health):'—')+'/100</span> <button class="btn btn-ghost" style="padding:7px 14px;font-size:12.5px" onclick="loadDashboard()">↻ Refresh</button>'
+      : '<span style="font-family:var(--mono);font-size:12px;color:var(--signal)">● assembled</span> <button class="btn btn-ghost" style="padding:7px 14px;font-size:12.5px" onclick="simRun()">▶ Simulate run</button>';
+    const legend='<div class="flegend"><span class="lg a">Execution agents</span><span class="lg p">Policy &amp; intelligence layer</span>'+(isLive?'<span class="lg live">● live data</span>':'<span class="lg dim">◐ blueprint · not yet running</span>')+'</div>';
+    const abar=isLive
+      ? '<div class="abar">'+
+        '<button class="btn btn-primary" onclick="runScan()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Upload leads</button>'+
+        '<button class="btn btn-ghost" onclick="runPipeline()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>Run AI scan</button>'+
+        '<button class="btn btn-ghost" onclick="loadDashboard()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.5 9a9 9 0 0114.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0020.5 15"/></svg>Refresh</button>'+
+        '<div class="trustline">Live workspace · agents run only on your data · nothing sends without your approval</div>'+
+        '</div>'
+      : '<div class="abar">'+
+        '<button class="btn btn-primary" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 12h6v10l10-10h-6z"/></svg>Deploy system</button>'+
+        '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export</button>'+
+        '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>Save project</button>'+
+        '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy prompts</button>'+
+        '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>Connect integrations</button>'+
+        '<div class="trustline">Founding pricing · 14-day trial · cancel anytime · nothing sends without your approval</div>'+
+        '</div>';
     document.getElementById(target||'bFlow').innerHTML=
-      '<div class="flow3d"><div class="glass glass-strong flow" id="flowBox"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">'+
+      '<div class="flow3d"><div class="glass glass-strong flow" id="flowBox"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">'+
       '<b style="font-family:var(--display);font-size:14px">'+esc(p.industry||selType)+' · '+esc(selGoal)+' system</b>'+
-      '<span style="font-family:var(--mono);font-size:12px;color:var(--signal)">● assembled</span> <button class="btn btn-ghost" style="padding:7px 14px;font-size:12.5px" onclick="simRun()">▶ Simulate run</button></div>'+
-      '<div class="fmetrics"><div class="m"><b id="fm1">0</b><span>leads in system</span></div><div class="m"><b id="fm2">$0</b><span>est. recoverable</span></div><div class="m"><b id="fm3">0</b><span>AI agents live</span></div><div class="m"><b id="fm4">0%</b><span>human-approved sends</span></div></div>'+
+      statusHTML+'</div>'+
+      legend+
+      '<div class="fmetrics"><div class="m"><b id="fm1">0</b><span>leads in system</span></div><div class="m"><b id="fm2">$0</b><span>'+(isLive?'revenue tracked':'est. recoverable')+'</span></div><div class="m"><b id="fm3">0</b><span>AI agents live</span></div><div class="m"><b id="fm4">0%</b><span>human-approved sends</span></div></div>'+
       '<div class="flow-lane">'+nodes.join(con)+'</div>'+
       '<div class="vlink"><span>⬇ policy & intelligence layer</span></div>'+
       '<div class="flow-lane infra">'+infra.join('<div class="fcon" style="opacity:.35">·</div>')+'</div>'+
       '<div class="fdetail" id="fDetail"></div>'+
-      '<div class="abar">'+
-      '<button class="btn btn-primary" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 12h6v10l10-10h-6z"/></svg>Deploy system</button>'+
-      '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Export</button>'+
-      '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8"/></svg>Save project</button>'+
-      '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy prompts</button>'+
-      '<button class="btn btn-ghost" onclick="unlock()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>Connect integrations</button>'+
-      '<div class="trustline">Founding pricing · 14-day trial · cancel anytime · nothing sends without your approval</div>'+
-      '</div></div></div>';
+      abar+
+      '</div></div>';
     let d=0;[0,1,2,3,4,5,6,7,8,9].forEach(n=>{setTimeout(()=>{const el=document.getElementById('fn'+n);if(el)el.classList.add('in')},d+=110)});
-    countTo('fm1',leads,'', '');countTo('fm2',s.projected_recoverable_usd||0,'$','');
+    countTo('fm1',isLive?(L.total_leads||0):leads,'', '');countTo('fm2',isLive?(L.revenue_at_risk||0):(s.projected_recoverable_usd||0),'$','');
     setTimeout(()=>{countTo('fm3',10,'','');countTo('fm4',100,'','%')},400);
     const box=document.getElementById('flowBox'),wrap3=box.parentElement;
     wrap3.addEventListener('mousemove',e=>{const r=wrap3.getBoundingClientRect();const px=(e.clientX-r.left)/r.width-.5,py=(e.clientY-r.top)/r.height-.5;box.style.transform='rotateX('+(-py*4)+'deg) rotateY('+(px*5)+'deg)'});
@@ -1377,10 +1411,11 @@
     function tick(t){const p=Math.min((t-t0)/dur,1);const v=Math.floor((1-Math.pow(1-p,3))*target);el.textContent=pre+v.toLocaleString()+suf;if(p<1)requestAnimationFrame(tick)}requestAnimationFrame(tick)}
   let simBusy=false;
   function simRun(){
-    if(simBusy||!bSpec)return; simBusy=true;
-    const p=bSpec.business_profile||{},m=bSpec.the_math||{};
+    const sp=bSpec||boardSpec;
+    if(simBusy||!sp)return; simBusy=true;
+    const p=sp.business_profile||{},m=sp.the_math||{};
     const leads=(p.estimated_dead_leads||1500),rev=(m.revivable_leads||Math.round(leads*.3));
-    const chips=[leads.toLocaleString()+' leads imported','scored 0-100, top '+rev.toLocaleString()+' flagged','diagnoses drafted per lead','5 touches staged for approval','fields + suppression synced',fmtUSD(bSpec.projected_recoverable_usd)+' projected'];
+    const chips=[leads.toLocaleString()+' leads imported','scored 0-100, top '+rev.toLocaleString()+' flagged','diagnoses drafted per lead','5 touches staged for approval','fields + suppression synced',fmtUSD(sp.projected_recoverable_usd)+' projected'];
     document.querySelectorAll('.fnode').forEach(n=>{n.classList.remove('run','done')});
     let k=0;
     const step=()=>{
@@ -1394,7 +1429,7 @@
   }
   function openNode(key,el){
     document.querySelectorAll('.fnode').forEach(n=>n.classList.remove('sel'));el.classList.add('sel');
-    const s=bSpec||{};const p=s.business_profile||{},sc=s.scoring_config||{},kit=s.sell_kit||{};
+    const s=bSpec||boardSpec||{};const p=s.business_profile||{},sc=s.scoring_config||{},kit=s.sell_kit||{};
     const D=document.getElementById('fDetail');let h='';
     if(key==='source')h='<b>Lead Source</b>, imports the client\'s dead-lead CSV or syncs their CRM. Industry: <b>'+esc(p.industry||selType)+'</b> · ~<b>'+((p.estimated_dead_leads||0).toLocaleString())+'</b> leads · avg deal <b>'+fmtUSD(p.est_avg_deal_value)+'</b>.';
     else if(key==='scoring')h='<b>Scoring Agent</b>, '+esc(sc.model||'Dead Lead Score v2')+'. Decay half-life <b>'+(sc.decay_halflife_days||90)+' days</b>. Factors: <b>'+((sc.factors||[]).join(' × '))+'</b>. Every score is reproducible, no LLM guessing.';
@@ -1403,7 +1438,7 @@
     else if(key==='crm')h='<b>CRM Update</b>, writes scores, tags, and revival status back; maintains the suppression list automatically (opt-outs honored instantly).';
     else if(key==='reports')h='<b>Reports</b>, recovered-revenue ledger + daily executive brief. Your sell kit: retainer <b>'+esc(kit.suggested_retainer||'$500–$1,500/mo')+'</b> · pitch: <i style="font-family:var(--serif)">"'+esc(kit.pitch_opener||'')+'"</i>';
     else if(key==='guard')h='<b>Suppression Guard</b>, the policy layer. Every opt-out, bounce and complaint is suppressed instantly and checked <b>before every send</b>. CAN-SPAM / TCPA / GDPR aware, this is what keeps your clients (and you) safe.';
-    else if(key==='timing')h='<b>Best-Window Timing</b>, each cause of death has an optimal re-contact window (e.g. pricing objections convert best ~'+((bSpec&&bSpec.revival_sequence&&bSpec.revival_sequence.length>2)?'4–5 weeks':'28–35 days')+' after going cold). The system times every touch to it automatically.';
+    else if(key==='timing')h='<b>Best-Window Timing</b>, each cause of death has an optimal re-contact window (e.g. pricing objections convert best ~'+((s.revival_sequence&&s.revival_sequence.length>2)?'4–5 weeks':'28–35 days')+' after going cold). The system times every touch to it automatically.';
     else if(key==='ab')h='<b>A/B Optimizer</b>, continuously tests angles, subject lines and send timing across the sequence, keeps statistical winners, and retires losers. The system gets sharper every campaign.';
     else if(key==='memory')h='<b>Business Memory</b>, every outcome feeds back into the '+esc(selType)+' model: which causes revive, which angles convert, which windows hit. The longer it runs, the harder this system is to replicate.';
     D.innerHTML=h;D.classList.add('open');
