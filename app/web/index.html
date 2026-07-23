@@ -1009,11 +1009,11 @@
 
   /* command center (gated) */
   let previewMode=false;
-  function launchApp(){previewMode=false;try{pvRestore()}catch(e){};site.style.display='none';app.style.display='block';scrollTo(0,0);
+  function launchApp(){previewMode=false;stopPreviewSim();try{pvRestore()}catch(e){};site.style.display='none';app.style.display='block';scrollTo(0,0);
     const sc=document.getElementById('sideCard');
     if(sc&&currentUser){sc.style.display='block';sc.innerHTML='<b style="font-family:var(--display);font-size:12.5px;color:var(--text)">'+(currentUser.company||'Your workspace')+'</b><p style="color:var(--dim);margin:5px 0 0;font-size:11.5px">Plan: '+(currentUser.subscription_status||'trial')+'</p>';}
     loadDashboard()}
-  function backToSite(){app.style.display='none';site.style.display='block';stopBoardAutoRefresh()}
+  function backToSite(){app.style.display='none';site.style.display='block';stopBoardAutoRefresh();stopPreviewSim()}
 
   /* ── System board: live auto-refresh (polls the workspace while the board is open) ── */
   let boardPollTimer=null, boardTickTimer=null, boardLastFetch=0;
@@ -1345,7 +1345,7 @@
     const con='<div class="fcon">➜</div>';
     const statusHTML=isLive
       ? '<span class="boardstat" id="boardStatus"><span class="livedot"></span>Live · '+(L.total_leads||0).toLocaleString()+' leads · health '+(L.health!=null?Math.round(L.health):'—')+'/100</span> <span class="board-ago" id="boardUpdated">updated just now</span> <button class="btn btn-ghost" style="padding:7px 14px;font-size:12.5px" onclick="refreshBoardLive()">↻ Refresh</button>'
-      : '<span style="font-family:var(--mono);font-size:12px;color:var(--signal)">● assembled</span> <button class="btn btn-ghost" style="padding:7px 14px;font-size:12.5px" onclick="simRun()">▶ Simulate run</button>';
+      : '<span class="boardstat" id="simStatus" style="color:var(--signal)">● assembled</span> <button class="btn btn-ghost" style="padding:7px 14px;font-size:12.5px" onclick="simRun()">▶ Simulate run</button>';
     const legend='<div class="flegend"><span class="lg a">Execution agents</span><span class="lg p">Policy &amp; intelligence layer</span>'+(isLive?'<span class="lg live">● live data</span>':'<span class="lg dim">◐ blueprint · not yet running</span>')+'</div>';
     const abar=isLive
       ? '<div class="abar">'+
@@ -1426,7 +1426,7 @@
     const lf=document.getElementById('bFlow');if(lf)lf.innerHTML='';
     const lr=document.getElementById('bResult');if(lr)lr.innerHTML='';
     const bh=document.getElementById('boardHost');
-    if(bh){bh.innerHTML='';renderFlow(s,'boardHost');}
+    if(bh){bh.innerHTML='';renderFlow(s,'boardHost');setTimeout(startPreviewSim,700);}   // auto-play the pipeline so the board looks alive
     pvSet('[data-panel="integrations"] .intwrap',
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;text-align:left">'+
       ['HubSpot|CRM sync','Salesforce|CRM sync','Pipedrive|CRM sync','Twilio|SMS sending','SendGrid|Email sending','Slack|Alerts and briefs','Calendly|Booking links','Zapier|5,000+ apps','Whop|Billing']
@@ -1461,18 +1461,27 @@
   }
   function countTo(id,target,pre,suf){const el=document.getElementById(id);if(!el)return;const t0=performance.now(),dur=1200;
     function tick(t){const p=Math.min((t-t0)/dur,1);const v=Math.floor((1-Math.pow(1-p,3))*target);el.textContent=pre+v.toLocaleString()+suf;if(p<1)requestAnimationFrame(tick)}requestAnimationFrame(tick)}
-  let simBusy=false;
-  function simRun(){
+  let simBusy=false, simLoop=false, simLoopTimer=null;
+  function stopPreviewSim(){ simLoop=false; if(simLoopTimer){clearTimeout(simLoopTimer);simLoopTimer=null;} }
+  function startPreviewSim(){ stopPreviewSim(); simRun(true); }   // auto-play the pipeline, looped, in preview
+  function simRun(loop){
     const sp=bSpec||boardSpec;
-    if(simBusy||!sp)return; simBusy=true;
+    if(simBusy||!sp)return; simBusy=true; simLoop=!!loop;
     const p=sp.business_profile||{},m=sp.the_math||{};
     const leads=(p.estimated_dead_leads||1500),rev=(m.revivable_leads||Math.round(leads*.3));
     const chips=[leads.toLocaleString()+' leads imported','scored 0-100, top '+rev.toLocaleString()+' flagged','diagnoses drafted per lead','5 touches staged for approval','fields + suppression synced',fmtUSD(sp.projected_recoverable_usd)+' projected'];
     document.querySelectorAll('.fnode').forEach(n=>{n.classList.remove('run','done')});
+    const ss=document.getElementById('simStatus'); if(ss)ss.textContent='● running';
     let k=0;
     const step=()=>{
       if(k>0){const prev=document.getElementById('fn'+(k-1));if(prev){prev.classList.remove('run');prev.classList.add('done')}}
-      if(k>5){toast('Simulation complete. This is a preview: activate to run it on your real list.');simBusy=false;return}
+      if(k>5){
+        simBusy=false;
+        if(ss)ss.textContent=simLoop?'● live preview':'● run complete';
+        if(!simLoop){toast('Simulation complete. This is a preview: activate to run it on your real list.');return;}
+        simLoopTimer=setTimeout(()=>{ if(simLoop&&(bSpec||boardSpec)) simRun(true); }, 2600);   // loop so the board always looks alive
+        return;
+      }
       const n=document.getElementById('fn'+k),c=document.getElementById('fs'+k);
       if(n){n.classList.add('run');if(c)c.textContent=chips[k]}
       k++;setTimeout(step,820);
