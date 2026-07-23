@@ -357,6 +357,11 @@
   .flegend .lg.p::before{background:var(--violet)}
   .flegend .lg.live{color:var(--signal)}.flegend .lg.live::before{display:none}
   .flegend .lg.dim::before{display:none}
+  .boardstat{font-family:var(--mono);font-size:12px;color:var(--signal);display:inline-flex;align-items:center}
+  .board-ago{font-family:var(--mono);font-size:11px;color:var(--dim);margin:0 4px}
+  .livedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--signal);box-shadow:0 0 8px var(--signal);margin-right:7px;animation:pulse 1.6s infinite}
+  .sim-chip.flash{animation:chipflash .8s ease}
+  @keyframes chipflash{0%{background:rgba(45,212,191,.45);color:#fff;box-shadow:0 0 0 1px rgba(45,212,191,.5)}100%{}}
   .fnode.done{border-color:rgba(45,212,191,.35)}
   .fnode.in{opacity:1;transform:none}
   .fnode:hover{border-color:var(--signal);transform:translateY(-3px)}
@@ -1008,7 +1013,53 @@
     const sc=document.getElementById('sideCard');
     if(sc&&currentUser){sc.style.display='block';sc.innerHTML='<b style="font-family:var(--display);font-size:12.5px;color:var(--text)">'+(currentUser.company||'Your workspace')+'</b><p style="color:var(--dim);margin:5px 0 0;font-size:11.5px">Plan: '+(currentUser.subscription_status||'trial')+'</p>';}
     loadDashboard()}
-  function backToSite(){app.style.display='none';site.style.display='block'}
+  function backToSite(){app.style.display='none';site.style.display='block';stopBoardAutoRefresh()}
+
+  /* ── System board: live auto-refresh (polls the workspace while the board is open) ── */
+  let boardPollTimer=null, boardTickTimer=null, boardLastFetch=0;
+  function stopBoardAutoRefresh(){ if(boardPollTimer){clearInterval(boardPollTimer);boardPollTimer=null;} if(boardTickTimer){clearInterval(boardTickTimer);boardTickTimer=null;} }
+  function startBoardAutoRefresh(){
+    stopBoardAutoRefresh();
+    boardPollTimer=setInterval(()=>{ if(document.visibilityState==='visible') refreshBoardLive(); }, 12000);
+    boardTickTimer=setInterval(updateBoardAgo, 1000);
+  }
+  function updateBoardAgo(){
+    const el=document.getElementById('boardUpdated'); if(!el||!boardLastFetch)return;
+    const s=Math.max(0,Math.round((Date.now()-boardLastFetch)/1000));
+    el.textContent = s<2?'updated just now':('updated '+s+'s ago');
+  }
+  function boardLiveChips(ov){ return [
+    (ov.total_leads||0).toLocaleString()+' imported',
+    (ov.dormant_leads||0).toLocaleString()+' scored',
+    (ov.reactivated_leads||0).toLocaleString()+' reactivated',
+    (ov.campaigns_sent_24h||0)+' sent · '+(ov.responses_24h||0)+' replies',
+    (ov.total_leads||0).toLocaleString()+' synced',
+    fmtUSD(ov.revenue_at_risk||0)+' tracked'
+  ]; }
+  function setChip(i,val){ const el=document.getElementById('fs'+i); if(!el||el.textContent===val)return; el.textContent=val; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+  function tweenMetric(id,to,pre,suf){ const el=document.getElementById(id); if(!el)return;
+    const from=parseInt(String(el.textContent).replace(/[^0-9]/g,''))||0;
+    if(from===to){el.textContent=pre+to.toLocaleString()+suf;return;}
+    const t0=performance.now(),dur=700;
+    (function tick(t){const p=Math.min((t-t0)/dur,1);const v=Math.round(from+(to-from)*(1-Math.pow(1-p,3)));el.textContent=pre+v.toLocaleString()+suf;if(p<1)requestAnimationFrame(tick);})(performance.now());
+  }
+  async function refreshBoardLive(){
+    if(previewMode||!AUTH_TOKEN)return;
+    const bh=document.getElementById('boardHost'); if(!bh||!bh.querySelector('.flow'))return;   // board not in live mode
+    try{
+      const headers=await authHeaders();
+      const r=await fetch(API_BASE+'/api/v1/dashboard/overview',{headers});
+      if(!r.ok)return;
+      const ov=await r.json();
+      boardLiveChips(ov).forEach((c,i)=>setChip(i,c));
+      tweenMetric('fm1',ov.total_leads||0,'','');
+      tweenMetric('fm2',Math.round(ov.revenue_at_risk||0),'$','');
+      const stt=document.getElementById('boardStatus');
+      if(stt)stt.innerHTML='<span class="livedot"></span>Live · '+(ov.total_leads||0).toLocaleString()+' leads · health '+(ov.pipeline_health_score!=null?Math.round(ov.pipeline_health_score):'—')+'/100';
+      boardLastFetch=Date.now(); updateBoardAgo();
+    }catch(e){}
+  }
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&boardPollTimer)refreshBoardLive(); });
   function nav(el){document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));el.classList.add('active');const p=el.dataset.p;document.querySelectorAll('.panel').forEach(pn=>pn.classList.toggle('active',pn.dataset.panel===p))}
 
   /* ── Live client system, no demo data. Clients see only what they upload. ── */
@@ -1293,7 +1344,7 @@
     ];
     const con='<div class="fcon">➜</div>';
     const statusHTML=isLive
-      ? '<span style="font-family:var(--mono);font-size:12px;color:var(--signal)">● Live · '+(L.total_leads||0).toLocaleString()+' leads · health '+(L.health!=null?Math.round(L.health):'—')+'/100</span> <button class="btn btn-ghost" style="padding:7px 14px;font-size:12.5px" onclick="loadDashboard()">↻ Refresh</button>'
+      ? '<span class="boardstat" id="boardStatus"><span class="livedot"></span>Live · '+(L.total_leads||0).toLocaleString()+' leads · health '+(L.health!=null?Math.round(L.health):'—')+'/100</span> <span class="board-ago" id="boardUpdated">updated just now</span> <button class="btn btn-ghost" style="padding:7px 14px;font-size:12.5px" onclick="refreshBoardLive()">↻ Refresh</button>'
       : '<span style="font-family:var(--mono);font-size:12px;color:var(--signal)">● assembled</span> <button class="btn btn-ghost" style="padding:7px 14px;font-size:12.5px" onclick="simRun()">▶ Simulate run</button>';
     const legend='<div class="flegend"><span class="lg a">Execution agents</span><span class="lg p">Policy &amp; intelligence layer</span>'+(isLive?'<span class="lg live">● live data</span>':'<span class="lg dim">◐ blueprint · not yet running</span>')+'</div>';
     const abar=isLive
@@ -1334,6 +1385,7 @@
       renderInsights(s);
       document.getElementById('bFlow').scrollIntoView({behavior:'smooth',block:'start'});
     }
+    if(isLive){ boardLastFetch=Date.now(); startBoardAutoRefresh(); }   // keep the board fresh, every ~12s
   }
   function renderInsights(s){
     const m=s.the_math||{},kit=s.sell_kit||{};
@@ -1364,7 +1416,7 @@
   const pvLock='<div style="text-align:center;margin-top:16px"><button class="btn btn-primary" onclick="unlock()">🔒 Activate to run on real data →</button></div>';
   function enterPreviewWorkspace(){
     if(!bSpec)return;
-    previewMode=true;
+    previewMode=true; stopBoardAutoRefresh();
     site.style.display='none';app.style.display='block';scrollTo(0,0);
     const s=bSpec,p=s.business_profile||{},m=s.the_math||{},kit=s.sell_kit||{};
     setTxt('dashStatus','PREVIEW · '+(p.industry||selType)+' · '+(p.goal||selGoal)+' system, assembled from your prompt');
