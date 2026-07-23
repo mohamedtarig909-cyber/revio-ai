@@ -1554,6 +1554,17 @@
   }
 
   let tt;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2800)}
+
+  /* ── First-party visit counter (no cookies, no third parties) ── */
+  (function(){
+    try{
+      let vid=localStorage.getItem('revio_vid');
+      if(!vid){vid=(Date.now().toString(36)+Math.random().toString(36).slice(2,10));localStorage.setItem('revio_vid',vid);}
+      fetch('/api/v1/track',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({path:location.pathname||'/',referrer:document.referrer||'',visitor_id:vid}),
+        keepalive:true}).catch(()=>{});
+    }catch(e){}
+  })();
 </script>
 </body>
 </html>

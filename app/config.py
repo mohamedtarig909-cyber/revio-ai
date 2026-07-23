@@ -70,7 +70,8 @@ class Settings(BaseSettings):
 
     sentry_dsn: str = ""
 
-    admin_token: str = ""   # gate for the /api/v1/admin control panel
+    admin_token: str = ""   # legacy header gate for /api/v1/admin (still accepted)
+    owner_email: str = ""   # this account signs in to /admin with its normal email + password
     google_client_id: str = ""   # Google OAuth web client id (Sign in with Google)
     whop_webhook_secret: str = ""   # verify Whop webhook signatures
 

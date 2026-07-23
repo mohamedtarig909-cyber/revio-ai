@@ -22,13 +22,15 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy import func, select
 
 from app.config import get_settings
-from app.core.security import create_access_token, hash_password
+from app.core.security import create_access_token, decode_access_token, hash_password
 from app.db.session import SyncSessionLocal
 from app.db.models.organization import Organization
 from app.db.models.user import User
 from app.db.models.lead import Lead, LeadStatus
 from app.db.models.lead_analysis import LeadAnalysis
 from app.db.models.agent_run import AgentRun
+from app.db.models.page_view import PageView
+from app.db.models.saved_system import SavedSystem
 from app.agents.revive_agent import ReviveAgent
 from app.orchestrator.engine import OrchestratorEngine
 
@@ -49,9 +51,52 @@ SAMPLE_LEADS = [
 ]
 
 
-def require_admin(x_admin_token: str = Header(default="")) -> None:
-    if not settings.admin_token or x_admin_token != settings.admin_token:
-        raise HTTPException(status_code=401, detail="Invalid or missing admin token")
+def _admin_user_from_bearer(authorization: str) -> User | None:
+    """Resolve a signed-in owner from a normal Bearer JWT, or None."""
+    if not authorization.lower().startswith("bearer "):
+        return None
+    try:
+        payload = decode_access_token(authorization.split(" ", 1)[1].strip())
+    except Exception:                                   # noqa: BLE001
+        return None
+    sub = payload.get("sub")
+    if not sub:
+        return None
+    with SyncSessionLocal() as db:
+        try:
+            user = db.get(User, UUID(str(sub)))
+        except Exception:                               # noqa: BLE001
+            return None
+        if not user:
+            return None
+        owner = (settings.owner_email or "").strip().lower()
+        if user.is_admin or (owner and (user.email or "").strip().lower() == owner):
+            return user
+    return None
+
+
+def require_admin(x_admin_token: str = Header(default=""),
+                  authorization: str = Header(default="")) -> None:
+    """Owner gate. Accepts an email+password session (preferred) or the legacy token."""
+    if _admin_user_from_bearer(authorization):
+        return
+    if settings.admin_token and x_admin_token == settings.admin_token:
+        return
+    raise HTTPException(status_code=401, detail="Sign in with your owner account to continue")
+
+
+@router.get("/me")
+def admin_me(authorization: str = Header(default=""),
+             x_admin_token: str = Header(default="")):
+    """Who am I, and am I allowed in? Used by the dashboard right after sign-in."""
+    user = _admin_user_from_bearer(authorization)
+    if user:
+        return {"is_admin": True, "email": user.email, "name": user.name,
+                "via": "account"}
+    if settings.admin_token and x_admin_token == settings.admin_token:
+        return {"is_admin": True, "email": "", "name": "Operator", "via": "token"}
+    raise HTTPException(status_code=403,
+                        detail="This account is not the owner account")
 
 
 @router.post("/bootstrap")
@@ -246,3 +291,94 @@ def overview(org_id: UUID, _: None = Depends(require_admin)):
                 "started_at": str(getattr(r, "started_at", "")),
             } for r in recent],
         }
+
+
+@router.get("/analytics")
+def analytics(days: int = Query(30, ge=1, le=365), _: None = Depends(require_admin)):
+    """Everything happening in the business, in one payload.
+
+    Traffic, signups, paying customers and systems built — headline numbers plus
+    a daily series so the dashboard can draw trends without a second round-trip.
+    """
+    since = datetime.now(UTC) - timedelta(days=days)
+    with SyncSessionLocal() as db:
+        # ---- headline numbers ----
+        views = db.scalar(select(func.count()).select_from(PageView)
+                          .where(PageView.created_at >= since)) or 0
+        visitors = db.scalar(
+            select(func.count(func.distinct(PageView.visitor_id)))
+            .where(PageView.created_at >= since, PageView.visitor_id != "")) or 0
+        signups = db.scalar(select(func.count()).select_from(User)
+                            .where(User.created_at >= since)) or 0
+        total_users = db.scalar(select(func.count()).select_from(User)) or 0
+        paying = db.scalar(select(func.count()).select_from(User)
+                           .where(User.subscription_status == "active")) or 0
+        systems = db.scalar(select(func.count()).select_from(SavedSystem)) or 0
+        leads_total = db.scalar(select(func.count()).select_from(Lead)) or 0
+
+        # ---- daily series (views / visitors / signups) ----
+        day = func.date_trunc("day", PageView.created_at)
+        vrows = db.execute(
+            select(day.label("d"), func.count().label("v"),
+                   func.count(func.distinct(PageView.visitor_id)).label("u"))
+            .where(PageView.created_at >= since).group_by("d").order_by("d")).all()
+        sday = func.date_trunc("day", User.created_at)
+        srows = db.execute(
+            select(sday.label("d"), func.count().label("s"))
+            .where(User.created_at >= since).group_by("d").order_by("d")).all()
+        vmap = {str(r.d)[:10]: (int(r.v), int(r.u)) for r in vrows}
+        smap = {str(r.d)[:10]: int(r.s) for r in srows}
+        series = []
+        start = (datetime.now(UTC) - timedelta(days=days - 1)).date()
+        for i in range(days):
+            key = str(start + timedelta(days=i))
+            v, u = vmap.get(key, (0, 0))
+            series.append({"day": key, "views": v, "visitors": u,
+                           "signups": smap.get(key, 0)})
+
+        # ---- where the traffic goes ----
+        top_pages = [
+            {"path": str(r.path), "views": int(r.c)}
+            for r in db.execute(
+                select(PageView.path, func.count().label("c"))
+                .where(PageView.created_at >= since)
+                .group_by(PageView.path).order_by(func.count().desc()).limit(12)).all()
+        ]
+        top_refs = [
+            {"referrer": str(r.referrer or "direct"), "views": int(r.c)}
+            for r in db.execute(
+                select(PageView.referrer, func.count().label("c"))
+                .where(PageView.created_at >= since)
+                .group_by(PageView.referrer).order_by(func.count().desc()).limit(8)).all()
+        ]
+
+        # ---- who just showed up ----
+        recent_users = db.execute(
+            select(User).order_by(User.created_at.desc()).limit(8)).scalars().all()
+        recent_systems = db.execute(
+            select(SavedSystem).order_by(SavedSystem.created_at.desc()).limit(8)).scalars().all()
+
+    return {
+        "range_days": days,
+        "kpis": {
+            "page_views": views, "unique_visitors": visitors, "signups": signups,
+            "total_users": total_users, "paying_customers": paying,
+            "systems_built": systems, "total_leads": leads_total,
+        },
+        "funnel": {
+            "visitors": visitors, "signups": signups, "paying": paying,
+            "visitor_to_signup": round(signups / visitors * 100, 1) if visitors else 0.0,
+            "signup_to_paying": round(paying / total_users * 100, 1) if total_users else 0.0,
+        },
+        "series": series,
+        "top_pages": top_pages,
+        "top_referrers": top_refs,
+        "recent_signups": [{
+            "email": u.email, "name": u.name,
+            "status": u.subscription_status,
+            "created_at": str(u.created_at),
+        } for u in recent_users],
+        "recent_systems": [{
+            "industry": s.industry, "goal": s.goal, "created_at": str(s.created_at),
+        } for s in recent_systems],
+    }

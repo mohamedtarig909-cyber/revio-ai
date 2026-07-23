@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import Boolean, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -25,6 +25,7 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     subscription_status: Mapped[str] = mapped_column(
         String(50), default=SubscriptionStatus.INCOMPLETE, nullable=False
     )
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     organization_id: Mapped[str | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="SET NULL"), index=True, nullable=True
     )
