@@ -37,6 +37,10 @@ from app.orchestrator.engine import OrchestratorEngine
 settings = get_settings()
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
+# Rough monthly value of one active subscription, for the estimated-MRR tile.
+# Matches the flagship plan; adjust if the headline price changes.
+MRR_PER_CUSTOMER = 149
+
 SAMPLE_LEADS = [
     {"name": "Jane Cooper", "company": "Acme Roofing", "domain": "acme.test", "value": 12000,
      "notes": "Requested a quote, went quiet after the proposal. No follow-up."},
@@ -352,19 +356,73 @@ def analytics(days: int = Query(30, ge=1, le=365), _: None = Depends(require_adm
                 .group_by(PageView.referrer).order_by(func.count().desc()).limit(8)).all()
         ]
 
+        # ---- today ----
+        midnight = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+        views_today = db.scalar(select(func.count()).select_from(PageView)
+                                .where(PageView.created_at >= midnight)) or 0
+        visitors_today = db.scalar(
+            select(func.count(func.distinct(PageView.visitor_id)))
+            .where(PageView.created_at >= midnight, PageView.visitor_id != "")) or 0
+        signups_today = db.scalar(select(func.count()).select_from(User)
+                                  .where(User.created_at >= midnight)) or 0
+
+        # ---- previous window, for growth deltas ----
+        prev_start = since - timedelta(days=days)
+        p_views = db.scalar(select(func.count()).select_from(PageView)
+                            .where(PageView.created_at >= prev_start,
+                                   PageView.created_at < since)) or 0
+        p_visitors = db.scalar(
+            select(func.count(func.distinct(PageView.visitor_id)))
+            .where(PageView.created_at >= prev_start, PageView.created_at < since,
+                   PageView.visitor_id != "")) or 0
+        p_signups = db.scalar(select(func.count()).select_from(User)
+                              .where(User.created_at >= prev_start,
+                                     User.created_at < since)) or 0
+
+        def _delta(cur, prev):
+            if not prev:
+                return None if not cur else 100.0
+            return round((cur - prev) / prev * 100, 0)
+
+        # ---- what people want to build (demand) ----
+        systems_in_range = db.scalar(select(func.count()).select_from(SavedSystem)
+                                     .where(SavedSystem.created_at >= since)) or 0
+        top_industries = [
+            {"label": str(r.industry or "—"), "count": int(r.c)}
+            for r in db.execute(
+                select(SavedSystem.industry, func.count().label("c"))
+                .where(SavedSystem.industry != "")
+                .group_by(SavedSystem.industry).order_by(func.count().desc()).limit(8)).all()
+        ]
+        top_goals = [
+            {"label": str(r.goal or "—"), "count": int(r.c)}
+            for r in db.execute(
+                select(SavedSystem.goal, func.count().label("c"))
+                .where(SavedSystem.goal != "")
+                .group_by(SavedSystem.goal).order_by(func.count().desc()).limit(8)).all()
+        ]
+
         # ---- who just showed up ----
         recent_users = db.execute(
             select(User).order_by(User.created_at.desc()).limit(8)).scalars().all()
         recent_systems = db.execute(
             select(SavedSystem).order_by(SavedSystem.created_at.desc()).limit(8)).scalars().all()
 
+    est_mrr = paying * MRR_PER_CUSTOMER
     return {
         "range_days": days,
+        "today": {"page_views": views_today, "unique_visitors": visitors_today,
+                  "signups": signups_today},
+        "deltas": {"page_views": _delta(views, p_views),
+                   "unique_visitors": _delta(visitors, p_visitors),
+                   "signups": _delta(signups, p_signups)},
         "kpis": {
             "page_views": views, "unique_visitors": visitors, "signups": signups,
             "total_users": total_users, "paying_customers": paying,
-            "systems_built": systems, "total_leads": leads_total,
+            "systems_built": systems, "systems_in_range": systems_in_range,
+            "total_leads": leads_total, "estimated_mrr": est_mrr,
         },
+        "demand": {"industries": top_industries, "goals": top_goals},
         "funnel": {
             "visitors": visitors, "signups": signups, "paying": paying,
             "visitor_to_signup": round(signups / visitors * 100, 1) if visitors else 0.0,

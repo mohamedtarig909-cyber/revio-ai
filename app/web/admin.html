@@ -75,6 +75,13 @@ a{color:var(--teal)}
 .kpi .v{font-size:27px;font-weight:600;margin-top:5px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
 .kpi .n{font-size:11.5px;color:var(--mut);margin-top:3px}
 .kpi.t .v{color:var(--teal)} .kpi.v .v{color:var(--violet)} .kpi.g .v{color:var(--green)}
+.kpi .d{font-size:11.5px;font-weight:600;margin-top:4px;display:inline-flex;align-items:center;gap:3px}
+.kpi .d.up{color:var(--green)} .kpi .d.down{color:var(--rose)} .kpi .d.flat{color:var(--dim)}
+.today{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.ttile{flex:1;min-width:150px;background:linear-gradient(135deg,rgba(45,212,191,.10),rgba(167,139,250,.06));border:1px solid var(--bd);border-radius:13px;padding:13px 16px;display:flex;align-items:baseline;gap:9px}
+.ttile b{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.ttile span{font-size:12px;color:var(--mut)}
+.ttile .lz{font-size:10.5px;color:var(--teal);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-left:auto}
 
 .card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px}
 .card + .card{margin-top:14px}
@@ -186,6 +193,7 @@ a{color:var(--teal)}
 
     <!-- OVERVIEW -->
     <section class="panel on" data-panel="overview">
+      <div class="today" id="today"></div>
       <div class="kpis" id="kpis"></div>
       <div class="card">
         <h3>Traffic &amp; signups</h3>
@@ -208,13 +216,28 @@ a{color:var(--teal)}
           <div class="rowlist" id="recentUsers"></div>
         </div>
       </div>
+      <div class="two">
+        <div class="card">
+          <h3>What people want to build</h3>
+          <div class="cs">The industries most requested in the System Builder — real demand.</div>
+          <div class="bars" id="demandInd"></div>
+        </div>
+        <div class="card">
+          <h3>Most-wanted goals</h3>
+          <div class="cs">What visitors ask their system to do.</div>
+          <div class="bars" id="demandGoal"></div>
+        </div>
+      </div>
     </section>
 
     <!-- CUSTOMERS -->
     <section class="panel" data-panel="customers">
       <div class="card">
-        <h3>Everyone who signed up</h3>
-        <div class="cs">Search, activate a plan, open their account, or remove them.</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+          <div><h3>Everyone who signed up</h3>
+          <div class="cs">Search, activate a plan, open their account, or remove them.</div></div>
+          <button class="btn ghost sm" onclick="exportCsv()">⬇ Export CSV</button>
+        </div>
         <input class="search" id="uSearch" placeholder="Search email, name or company…" oninput="renderUsers()"/>
         <div class="scroll" style="margin-top:14px"><table class="tbl">
           <thead><tr><th>Person</th><th>Company</th><th>Plan</th><th>Leads</th><th>Joined</th><th>Actions</th></tr></thead>
@@ -314,7 +337,7 @@ async function checkAdmin(){
 }
 function signOut(){TOKEN='';localStorage.removeItem('revio_admin_token');location.reload()}
 function openDash(){document.getElementById('login').style.display='none';
-  document.getElementById('shell').classList.add('on');loadAll()}
+  document.getElementById('shell').classList.add('on');loadAll();startAutoRefresh()}
 
 /* ---------- nav ---------- */
 const TITLES={overview:['Overview','How the business is doing right now.'],
@@ -345,27 +368,66 @@ async function loadAll(manual){
     USERS=(await uR.json().catch(()=>({users:[]}))).users||[];
     const od=await oR.json().catch(()=>({}));
     ORGS=od.orgs||od.organizations||[];
-    renderKpis();renderChart();renderFunnel();renderRecent();renderUsers();renderTraffic();renderSystems();renderOrgs();
+    renderToday();renderKpis();renderChart();renderFunnel();renderRecent();renderDemand();renderUsers();renderTraffic();renderSystems();renderOrgs();
     if(manual)toast('Updated');
   }catch(e){toast('Could not load data')}
 }
 
-function card(k,v,note,cls){return '<div class="kpi '+cls+'"><div class="k">'+k+'</div><div class="v">'+v+'</div><div class="n">'+note+'</div></div>'}
+/* refresh the dashboard on its own while it is open and the tab is visible */
+let adminTimer=null;
+function startAutoRefresh(){ stopAutoRefresh(); adminTimer=setInterval(()=>{ if(document.visibilityState==='visible')loadAll(); },20000); }
+function stopAutoRefresh(){ if(adminTimer){clearInterval(adminTimer);adminTimer=null;} }
+
+function card(k,v,note,cls,delta){
+  let d='';
+  if(delta!==undefined){
+    if(delta===null||delta===0){d='<div class="d flat">no change</div>';}
+    else if(delta>0){d='<div class="d up">▲ '+delta+'%<span style="color:var(--dim);font-weight:400"> vs prev</span></div>';}
+    else{d='<div class="d down">▼ '+Math.abs(delta)+'%<span style="color:var(--dim);font-weight:400"> vs prev</span></div>';}
+  }
+  return '<div class="kpi '+cls+'"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(d||'<div class="n">'+note+'</div>')+'</div>';
+}
+
+function renderToday(){
+  const t=DATA.today||{};
+  document.getElementById('today').innerHTML=
+    ttile(n(t.unique_visitors),'visitors today')+
+    ttile(n(t.page_views),'views today')+
+    ttile(n(t.signups),'signups today');
+}
+function ttile(v,label){return '<div class="ttile"><b>'+v+'</b><span>'+label+'</span><span class="lz">today</span></div>'}
 
 function renderKpis(){
-  const k=DATA.kpis,f=DATA.funnel;
+  const k=DATA.kpis,f=DATA.funnel,dl=DATA.deltas||{};
   document.getElementById('kpis').innerHTML=
-    card('Visitors',n(k.unique_visitors),'unique people, last '+RANGE+'d','t')+
-    card('Page views',n(k.page_views),'pages opened, last '+RANGE+'d','')+
-    card('New signups',n(k.signups),'accounts made, last '+RANGE+'d','v')+
+    card('Visitors',n(k.unique_visitors),'unique people, last '+RANGE+'d','t',dl.unique_visitors)+
+    card('Page views',n(k.page_views),'pages opened','',dl.page_views)+
+    card('New signups',n(k.signups),'accounts made','v',dl.signups)+
     card('Paying customers',n(k.paying_customers),'active subscriptions','g')+
+    card('Est. monthly revenue','$'+n(k.estimated_mrr),'from active plans','g')+
     card('Systems built',n(k.systems_built),'blueprints saved','')+
     card('Leads in system',n(k.total_leads),'across all customers','');
   document.getElementById('tKpis').innerHTML=
-    card('Visitors',n(k.unique_visitors),'last '+RANGE+' days','t')+
-    card('Page views',n(k.page_views),'last '+RANGE+' days','')+
+    card('Visitors',n(k.unique_visitors),'last '+RANGE+' days','t',dl.unique_visitors)+
+    card('Page views',n(k.page_views),'last '+RANGE+' days','',dl.page_views)+
     card('Views per visitor',k.unique_visitors?(k.page_views/k.unique_visitors).toFixed(1):'0','how deep they browse','')+
     card('Visitor → signup',f.visitor_to_signup+'%','of visitors make an account','v');
+}
+
+function renderDemand(){
+  const d=DATA.demand||{};
+  bars('demandInd',(d.industries||[]).map(x=>[x.label,x.count]));
+  bars('demandGoal',(d.goals||[]).map(x=>[x.label,x.count]));
+}
+
+function exportCsv(){
+  const rows=[['email','name','company','plan','leads','joined']];
+  USERS.forEach(u=>rows.push([u.email,u.name||'',u.company||'',u.subscription_status||'free',u.leads||0,u.created_at||'']));
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='revio-customers-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();URL.revokeObjectURL(a.href);toast('Exported '+USERS.length+' customers');
 }
 
 function renderChart(){

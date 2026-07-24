@@ -130,6 +130,7 @@ and drafts the revival campaign. You approve every message before it sends.</div
 <p><a href="/database-reactivation">The complete database reactivation guide</a> &middot;
 <a href="/compare">Revio AI vs the alternatives</a> &middot; <a href="/">Try the builder</a></p>
 <p class="small">&copy; Revio AI &middot; <a href="/">revioai.site</a></p>
+<script>(function(){{try{{var v=localStorage.getItem('revio_vid');if(!v){{v=Date.now().toString(36)+Math.random().toString(36).slice(2,10);localStorage.setItem('revio_vid',v);}}fetch('/api/v1/track',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{path:location.pathname||'/',referrer:document.referrer||'',visitor_id:v}}),keepalive:true}}).catch(function(){{}});}}catch(e){{}}}})();</script>
 </body></html>"""
 
 
