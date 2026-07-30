@@ -372,8 +372,10 @@
     height:calc(100vh - 172px);min-height:500px;
     box-shadow:0 30px 90px rgba(0,0,0,.5)}
   .osb-top{display:flex;align-items:center;gap:14px;padding:11px 15px;flex-wrap:wrap;
-    background:linear-gradient(180deg,rgba(255,255,255,.045),transparent);
-    border-bottom:1px solid var(--line);backdrop-filter:blur(20px);z-index:6;flex:none}
+    background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.015));
+    border-bottom:1px solid rgba(255,255,255,.10);
+    backdrop-filter:blur(26px) saturate(180%);-webkit-backdrop-filter:blur(26px) saturate(180%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.16);z-index:6;flex:none}
   .osb-id{display:flex;align-items:center;gap:9px;min-width:0}
   .osb-id b{font-family:var(--display);font-size:13.5px;font-weight:600;letter-spacing:-.2px;white-space:nowrap}
   .osb-sub{font-family:var(--mono);font-size:11px;color:var(--dim);white-space:nowrap}
@@ -384,7 +386,8 @@
   .osb-health .h b{font-size:13px;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
   .osb-health .h span{font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.7px}
   .osb-tools{display:flex;gap:6px}
-  .osb-btn{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted);
+  .osb-btn{background:linear-gradient(170deg,rgba(255,255,255,.11),rgba(255,255,255,.035));
+    border:1px solid rgba(255,255,255,.13);box-shadow:inset 0 1px 0 rgba(255,255,255,.20);color:var(--muted);
     border-radius:9px;padding:6px 11px;font-size:11.5px;font-family:var(--mono);cursor:pointer;
     transition:.18s cubic-bezier(.2,.8,.2,1);white-space:nowrap}
   .osb-btn:hover{background:rgba(255,255,255,.09);color:var(--text);transform:translateY(-1px)}
@@ -408,25 +411,73 @@
   .osb-empty.show{display:grid}
 
   /* ---- worker node ---- */
-  /* No backdrop-filter here on purpose: 13 blurred layers cost more GPU than
-     everything else on the page combined. Opaque panels look identical. */
-  .wk{position:absolute;width:214px;border-radius:16px;padding:14px 15px;cursor:pointer;
-    background:linear-gradient(160deg,#1B2220,#121716);
-    border:1px solid var(--line);contain:layout style paint;
-    transition:transform .28s cubic-bezier(.16,1,.3,1),box-shadow .28s,border-color .2s;
-    box-shadow:0 6px 22px rgba(0,0,0,.42);-webkit-font-smoothing:antialiased}
-  .wk:hover{transform:translateY(-3px);border-color:rgba(45,212,191,.45);
-    box-shadow:0 16px 42px rgba(0,0,0,.55),0 0 0 1px rgba(45,212,191,.2)}
-  .wk.sel{border-color:var(--signal);box-shadow:0 16px 46px rgba(0,0,0,.6),0 0 0 1px var(--signal)}
+  /* ── Liquid glass ──────────────────────────────────────────────────
+     Real backdrop refraction is reserved for the focused node and the
+     chrome panels. Thirteen simultaneously-blurred cards cost more GPU
+     than the rest of the page combined, so at rest the cards use layered
+     gradients + a specular rim, which is indistinguishable over this
+     near-uniform canvas. Blur switches on for the one card you touch. */
+  .wk{position:absolute;width:214px;border-radius:18px;padding:14px 15px;cursor:pointer;
+    isolation:isolate;overflow:hidden;
+    background:
+      linear-gradient(158deg,rgba(255,255,255,.11),rgba(255,255,255,.025) 44%,rgba(255,255,255,0) 72%),
+      linear-gradient(202deg,rgba(var(--c),.13),transparent 58%),
+      linear-gradient(160deg,#1A211F,#111615);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.26),
+      inset 0 -16px 30px rgba(0,0,0,.30),
+      0 8px 26px rgba(0,0,0,.44);
+    transition:transform .34s cubic-bezier(.16,1,.3,1),box-shadow .34s,border-color .24s,opacity .3s;
+    -webkit-font-smoothing:antialiased}
+  /* refractive edge: light bending around the rim */
+  .wk-rim{position:absolute;inset:0;border-radius:inherit;pointer-events:none;padding:1px;
+    background:linear-gradient(142deg,rgba(255,255,255,.55),rgba(255,255,255,.06) 30%,
+      rgba(255,255,255,0) 62%,rgba(var(--c),.34));
+    -webkit-mask:linear-gradient(#000,#000) content-box,linear-gradient(#000,#000);
+    -webkit-mask-composite:xor;mask:linear-gradient(#000,#000) content-box,linear-gradient(#000,#000);
+    mask-composite:exclude;opacity:.55;transition:opacity .3s}
+  /* specular sheen that tracks the cursor */
+  .wk-sheen{position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;
+    background:radial-gradient(240px circle at var(--mx,50%) var(--my,0%),
+      rgba(255,255,255,.16),rgba(255,255,255,.04) 38%,transparent 62%);
+    transition:opacity .4s}
+  .wk:hover .wk-sheen{opacity:1}
+  .wk:hover .wk-rim{opacity:.95}
+  .wk:hover{transform:translateY(-4px);border-color:rgba(var(--c),.5);
+    backdrop-filter:blur(22px) saturate(175%);-webkit-backdrop-filter:blur(22px) saturate(175%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 -16px 30px rgba(0,0,0,.28),
+      0 20px 48px rgba(0,0,0,.55),0 0 0 1px rgba(var(--c),.22),0 0 42px rgba(var(--c),.13)}
+  .wk.sel{border-color:rgba(var(--c),.7);
+    backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 22px 54px rgba(0,0,0,.6),
+      0 0 0 1px rgba(var(--c),.5),0 0 54px rgba(var(--c),.2)}
+  .wk.sel .wk-rim{opacity:1}
+  /* path tracing: focus the chain, let everything else recede */
+  .osb-stage.tracing .wk{opacity:.24;filter:saturate(.35)}
+  .osb-stage.tracing .wk.tr{opacity:1;filter:none}
+  .osb-stage.tracing .cl{opacity:.3}
+  .osb-edges .ebase,.osb-edges .eflow{transition:opacity .3s,stroke-width .3s}
+  .osb-stage.tracing .osb-edges .ebase,.osb-stage.tracing .osb-edges .eflow{opacity:.1}
+  .osb-stage.tracing .osb-edges .ebase.on{opacity:.55}
+  .osb-stage.tracing .osb-edges .eflow.on{opacity:1;stroke-width:2.4}
+  /* zoomed out: shed detail so the shape of the org reads at a glance */
+  .osb-world.lod .wk-act,.osb-world.lod .wk-m{display:none}
+  .osb-world.lod .wk{padding:15px}
+  .osb-world.lod .wk-n{font-size:15px}
+  .osb-world.lod .wk-h{margin-bottom:0}
+  .wk.dragging{cursor:grabbing;transition:none;z-index:20;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 30px 64px rgba(0,0,0,.66),0 0 0 1px rgba(var(--c),.55)}
   .wk-h{display:flex;align-items:center;gap:10px;margin-bottom:9px}
-  .wk-i{width:31px;height:31px;border-radius:10px;display:grid;place-items:center;font-size:15px;flex:none;
-    background:linear-gradient(135deg,rgba(45,212,191,.22),rgba(167,139,250,.17));
-    border:1px solid rgba(255,255,255,.08)}
+  .wk-i{width:32px;height:32px;border-radius:11px;display:grid;place-items:center;font-size:15px;flex:none;
+    background:linear-gradient(140deg,rgba(var(--c),.3),rgba(var(--c),.1));
+    border:1px solid rgba(var(--c),.26);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
   .wk-n{font-family:var(--display);font-size:14px;font-weight:600;letter-spacing:-.2px;
     color:#F2F7F5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
   .wk-dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--dim)}
-  .wk.s-run .wk-dot{background:var(--signal);box-shadow:0 0 9px var(--signal);animation:pulse 1.1s infinite}
-  .wk.s-done .wk-dot{background:var(--signal);box-shadow:0 0 7px var(--signal)}
+  .wk.s-run .wk-dot{background:rgb(var(--c));box-shadow:0 0 10px rgba(var(--c),.9);animation:pulse 1.1s infinite}
+  .wk.s-done .wk-dot{background:rgb(var(--c));box-shadow:0 0 7px rgba(var(--c),.7)}
   .wk.s-idle .wk-dot{animation:breathe 3.6s ease-in-out infinite}
   @keyframes breathe{0%,100%{opacity:.28}50%{opacity:.85}}
   .wk-act{font-size:12px;color:rgba(234,243,240,.66);line-height:1.5;min-height:36px;
@@ -443,22 +494,26 @@
   .wk.dim{opacity:.32;filter:saturate(.4)}
 
   /* cluster frame */
-  .cl{position:absolute;border-radius:19px;border:1px dashed rgba(255,255,255,.12);
-    background:rgba(255,255,255,.017);pointer-events:none}
-  .cl-t{position:absolute;top:-11px;left:15px;font-family:var(--mono);font-size:9.5px;
-    letter-spacing:1.3px;text-transform:uppercase;color:var(--dim);
-    background:#0A0C0B;padding:2px 9px;border-radius:99px;border:1px solid rgba(255,255,255,.09)}
+  .cl{position:absolute;border-radius:24px;border:1px solid rgba(var(--c),.16);
+    background:radial-gradient(ellipse at 50% 0%,rgba(var(--c),.055),transparent 70%);
+    pointer-events:none;transition:opacity .3s}
+  .cl-t{position:absolute;top:-11px;left:16px;font-family:var(--mono);font-size:9.5px;
+    letter-spacing:1.4px;text-transform:uppercase;color:rgba(var(--c),.9);
+    background:#0A0C0B;padding:3px 11px;border-radius:99px;border:1px solid rgba(var(--c),.28)}
 
   /* ---- minimap / zoom ---- */
   .osb-map{position:absolute;right:13px;bottom:13px;width:158px;height:96px;border-radius:11px;
-    background:rgba(8,11,10,.86);border:1px solid var(--line);backdrop-filter:blur(16px);
+    background:rgba(12,16,15,.62);border:1px solid rgba(255,255,255,.12);
+    backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 10px 30px rgba(0,0,0,.45);
     overflow:hidden;z-index:5;cursor:pointer}
   .osb-map i{position:absolute;border-radius:2px;background:rgba(45,212,191,.55)}
   .osb-mapview{position:absolute;border:1.5px solid var(--signal);border-radius:3px;
     background:rgba(45,212,191,.1);pointer-events:none}
   .osb-zoom{position:absolute;left:13px;bottom:13px;display:flex;align-items:center;gap:2px;z-index:5;
-    background:rgba(8,11,10,.86);border:1px solid var(--line);border-radius:10px;
-    backdrop-filter:blur(16px);padding:3px}
+    background:rgba(12,16,15,.62);border:1px solid rgba(255,255,255,.12);border-radius:12px;
+    backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 8px 24px rgba(0,0,0,.4);padding:3px}
   .osb-zoom button{width:26px;height:24px;background:transparent;border:none;color:var(--muted);
     cursor:pointer;font-size:14px;border-radius:7px;transition:.15s}
   .osb-zoom button:hover{background:rgba(255,255,255,.08);color:var(--text)}
@@ -466,7 +521,9 @@
 
   /* ---- inspector ---- */
   .osb-inspect{position:absolute;top:0;right:0;width:min(372px,88%);height:100%;z-index:8;
-    background:rgba(11,14,13,.93);backdrop-filter:blur(28px);border-left:1px solid var(--line);
+    background:linear-gradient(200deg,rgba(24,30,28,.80),rgba(11,14,13,.86));
+    backdrop-filter:blur(34px) saturate(180%);-webkit-backdrop-filter:blur(34px) saturate(180%);
+    border-left:1px solid rgba(255,255,255,.12);box-shadow:inset 1px 0 0 rgba(255,255,255,.13),-30px 0 70px rgba(0,0,0,.5);
     transform:translateX(102%);transition:transform .42s cubic-bezier(.16,1,.3,1);
     overflow-y:auto;padding:19px}
   .osb-inspect.open{transform:none}
@@ -492,7 +549,9 @@
 
   /* ---- copilot ---- */
   .osb-copilot{position:absolute;top:0;right:0;width:min(340px,88%);height:100%;z-index:9;
-    background:rgba(11,14,13,.95);backdrop-filter:blur(28px);border-left:1px solid var(--line);
+    background:linear-gradient(200deg,rgba(24,30,28,.82),rgba(11,14,13,.88));
+    backdrop-filter:blur(34px) saturate(180%);-webkit-backdrop-filter:blur(34px) saturate(180%);
+    border-left:1px solid rgba(255,255,255,.12);box-shadow:inset 1px 0 0 rgba(255,255,255,.13),-30px 0 70px rgba(0,0,0,.5);
     transform:translateX(102%);transition:transform .42s cubic-bezier(.16,1,.3,1);
     display:flex;flex-direction:column}
   .osb-copilot.open{transform:none}
@@ -523,7 +582,10 @@
   .osb-pal{position:fixed;inset:0;z-index:120;display:none;align-items:flex-start;
     justify-content:center;padding-top:14vh;background:rgba(0,0,0,.62);backdrop-filter:blur(7px)}
   .osb-pal.open{display:flex}
-  .osb-pal .box{width:min(540px,92vw);background:rgba(18,22,21,.97);border:1px solid rgba(255,255,255,.13);
+  .osb-pal .box{width:min(540px,92vw);
+    background:linear-gradient(165deg,rgba(30,37,35,.80),rgba(16,20,19,.86));
+    backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
+    border:1px solid rgba(255,255,255,.16);
     border-radius:16px;overflow:hidden;box-shadow:0 34px 90px rgba(0,0,0,.62);
     animation:palIn .3s cubic-bezier(.16,1,.3,1)}
   @keyframes palIn{from{opacity:0;transform:translateY(-14px) scale(.97)}to{opacity:1;transform:none}}
@@ -542,8 +604,10 @@
     backdrop-filter:blur(4px);animation:fade .4s ease}
   .osb-lock.show{display:grid}
   .osb-lock-card{max-width:600px;width:100%;text-align:center;padding:32px 30px;border-radius:22px;
-    background:linear-gradient(165deg,rgba(26,33,31,.96),rgba(15,19,18,.97));
-    border:1px solid rgba(255,255,255,.12);box-shadow:0 40px 110px rgba(0,0,0,.7)}
+    background:linear-gradient(165deg,rgba(34,42,40,.72),rgba(14,18,17,.82));
+    backdrop-filter:blur(44px) saturate(185%);-webkit-backdrop-filter:blur(44px) saturate(185%);
+    border:1px solid rgba(255,255,255,.18);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 44px 120px rgba(0,0,0,.72)}
   .osb-lock-ico{width:52px;height:52px;border-radius:16px;margin:0 auto 16px;display:grid;
     place-items:center;font-size:23px;background:linear-gradient(135deg,rgba(45,212,191,.22),rgba(167,139,250,.18));
     border:1px solid rgba(255,255,255,.1)}
@@ -1852,69 +1916,69 @@
      ══════════════════════════════════════════════════════════════════ */
   const OSB={view:{x:0,y:0,k:1},workers:[],edges:[],sel:null,explain:false,
              running:false,spec:null,live:null,built:false};
-  const WORLD={w:1560,h:560};
+  const WORLD={w:1600,h:540};
 
   /* Cluster frames: the org chart of the AI company. */
   const OSB_CLUSTERS=[
-    {id:'intake',   name:'Intake',       x:30,  y:40, w:250, h:330},
-    {id:'intel',    name:'Intelligence', x:330, y:10, w:250, h:470},
-    {id:'outreach', name:'Outreach',     x:630, y:40, w:250, h:330},
-    {id:'gov',      name:'Governance',   x:930, y:10, w:250, h:470},
-    {id:'growth',   name:'Growth',       x:1230,y:10, w:250, h:470}
+    {id:'intake',   name:'Intake',       x:30,  y:45, w:268, h:340, c:'56,189,248'},
+    {id:'intel',    name:'Intelligence', x:348, y:10, w:268, h:490, c:'45,212,191'},
+    {id:'outreach', name:'Outreach',     x:666, y:45, w:268, h:340, c:'167,139,250'},
+    {id:'gov',      name:'Governance',   x:984, y:10, w:268, h:490, c:'251,191,36'},
+    {id:'growth',   name:'Growth',       x:1302,y:10, w:268, h:490, c:'52,211,153'}
   ];
 
   function osbWorkerDefs(p,seq,chans){
     const ind=p.industry||selType||'your industry';
     return [
-      {id:'source',c:'intake',x:57,y:80,ico:'📥',name:'Intake Officer',
+      {id:'source',c:'intake',x:57,y:85,ico:'📥',name:'Intake Officer',
        purpose:'Pulls the dead-lead list in from a CSV or a live CRM sync, cleans it, and de-duplicates it.',
        act:'Imported and normalized the '+ind+' list',tools:['CSV parser','CRM sync'],
        prompt:'Ingest the lead export. Normalize names, emails and phones. Flag rows missing contact details.'},
-      {id:'crm',c:'intake',x:57,y:218,ico:'🗂',name:'CRM Steward',
+      {id:'crm',c:'intake',x:57,y:235,ico:'🗂',name:'CRM Steward',
        purpose:'Keeps your CRM and Revio in agreement — writes scores, tags and revival status back.',
        act:'Synced statuses and tags both ways',tools:['HubSpot','Pipedrive','Sheets'],
        prompt:'Mirror lead status, score and revival stage back into the CRM without overwriting human edits.'},
-      {id:'scoring',c:'intel',x:357,y:50,ico:'🎯',name:'Scoring Analyst',
+      {id:'scoring',c:'intel',x:375,y:50,ico:'🎯',name:'Scoring Analyst',
        purpose:'Gives every lead a 0–100 revival score. Deterministic, so the same lead always scores the same.',
        act:'Scored the list, surfaced the winnable share',tools:['Decay model','Deal weighting'],
        prompt:'Score each lead 0–100 on recency decay, deal value and prior engagement. Never guess — show the arithmetic.'},
-      {id:'diagnosis',c:'intel',x:357,y:190,ico:'🩺',name:'Diagnosis Agent',
+      {id:'diagnosis',c:'intel',x:375,y:200,ico:'🩺',name:'Diagnosis Agent',
        purpose:'Works out WHY each lead went cold — price, timing, competitor, or simply no follow-up.',
        act:'Diagnosed cause of death per lead',tools:['Note analysis','Objection model'],
        prompt:'Read the lead history and classify why it went quiet. Cite the evidence you used.'},
-      {id:'timing',c:'intel',x:357,y:330,ico:'⏱',name:'Timing Analyst',
+      {id:'timing',c:'intel',x:375,y:350,ico:'⏱',name:'Timing Analyst',
        purpose:'Picks the moment to re-contact. Each cause of death has its own best window.',
        act:'Scheduled every touch to its best window',tools:['Window model','Seasonality'],
        prompt:'Given the cause of death and the industry season, choose the optimal re-contact window.'},
-      {id:'writer',c:'outreach',x:657,y:80,ico:'✍️',name:'Message Writer',
+      {id:'writer',c:'outreach',x:693,y:85,ico:'✍️',name:'Message Writer',
        purpose:'Writes the actual revival message for each lead, in the owner\'s voice, referencing their real history.',
        act:'Drafted personalized revival copy',tools:['LLM','Brand voice'],
        prompt:'Write a short, human re-engagement message. Reference their specific situation. Never sound like a template.'},
-      {id:'sequence',c:'outreach',x:657,y:218,ico:'📨',name:'Sequence Manager',
+      {id:'sequence',c:'outreach',x:693,y:235,ico:'📨',name:'Sequence Manager',
        purpose:'Arranges the messages into a multi-step cadence across '+(chans||'email')+'.',
        act:(seq.length||5)+'-step sequence staged',tools:['Cadence engine'],
        prompt:'Build a '+(seq.length||5)+'-step cadence. Escalate channel only after silence. Stop instantly on reply.'},
-      {id:'compliance',c:'gov',x:957,y:50,ico:'🛡',name:'Compliance Officer',
+      {id:'compliance',c:'gov',x:1011,y:50,ico:'🛡',name:'Compliance Officer',
        purpose:'Checks every recipient against the do-not-contact list before anything is sent, and honors every opt-out permanently.',
        act:'Screened all recipients, opt-outs enforced',tools:['Suppression list','CAN-SPAM','TCPA'],
        prompt:'Block any send to a suppressed address. On a stop request, suppress permanently and never reverse it.'},
-      {id:'approval',c:'gov',x:957,y:190,ico:'✅',name:'Approval Gate',
+      {id:'approval',c:'gov',x:1011,y:200,ico:'✅',name:'Approval Gate',
        purpose:'Holds every message for a human yes. Nothing reaches a customer without the owner seeing it.',
        act:'Queued messages for your approval',tools:['Review queue'],
        prompt:'Present each drafted message for human approval. Never auto-release without explicit sign-off.'},
-      {id:'delivery',c:'gov',x:957,y:330,ico:'🚀',name:'Delivery Agent',
+      {id:'delivery',c:'gov',x:1011,y:350,ico:'🚀',name:'Delivery Agent',
        purpose:'Sends approved messages and tracks opens, clicks, bounces and complaints.',
        act:'Delivered approved messages',tools:['SendGrid','Twilio'],
        prompt:'Send approved messages at the scheduled time. Report bounces and complaints straight to Compliance.'},
-      {id:'response',c:'growth',x:1257,y:50,ico:'💬',name:'Response Analyst',
+      {id:'response',c:'growth',x:1329,y:50,ico:'💬',name:'Response Analyst',
        purpose:'Reads every reply, sorts intent, and escalates the hot ones to you immediately.',
        act:'Classified replies, escalated hot leads',tools:['Intent model'],
        prompt:'Classify each reply as interested, objection, not-now or opt-out. Route opt-outs to Compliance at once.'},
-      {id:'memory',c:'growth',x:1257,y:190,ico:'🧠',name:'Business Memory',
+      {id:'memory',c:'growth',x:1329,y:200,ico:'🧠',name:'Business Memory',
        purpose:'Remembers what works in '+ind+' — winning angles, timing, objections — and feeds it back into scoring.',
        act:'Learning what converts in '+ind,tools:['Vector memory','Outcome log'],
        prompt:'Record every outcome. Surface the patterns that repeat. Feed winners back into scoring and copy.'},
-      {id:'reporter',c:'growth',x:1257,y:330,ico:'📊',name:'Revenue Reporter',
+      {id:'reporter',c:'growth',x:1329,y:350,ico:'📊',name:'Revenue Reporter',
        purpose:'Tracks recovered revenue and writes the morning brief so you know what happened while you slept.',
        act:'Compiled the recovered-revenue ledger',tools:['Ledger','Daily brief'],
        prompt:'Report revenue recovered, what moved, and the single highest-value action to take today.'}
@@ -1954,34 +2018,41 @@
     if(!isLive) OSB.lockT=setTimeout(()=>osbLock(true),9000);
   }
 
+  const NW=214,NH=132;   // worker card size — edges anchor to these
   function osbDraw(){
-    const host=document.getElementById('osbNodes'),svg=document.getElementById('osbEdges');
-    if(!host||!svg)return;
+    const host=document.getElementById('osbNodes');
+    if(!host)return;
     host.innerHTML=OSB_CLUSTERS.map(c=>
-      '<div class="cl" style="left:'+c.x+'px;top:'+c.y+'px;width:'+c.w+'px;height:'+c.h+'px">'+
+      '<div class="cl" style="left:'+c.x+'px;top:'+c.y+'px;width:'+c.w+'px;height:'+c.h+'px;--c:'+c.c+'">'+
       '<span class="cl-t">'+c.name+'</span></div>').join('')+
       OSB.workers.map(w=>osbNodeHTML(w)).join('');
-    // edges + travelling data packets
+    osbDrawEdges();osbApply();osbMap();
+  }
+  /* Edges live in their own pass so dragging a node only repaints lines. */
+  function osbDrawEdges(){
+    const svg=document.getElementById('osbEdges');if(!svg)return;
     let d='';
     OSB.edges.forEach((e,i)=>{
       const a=OSB.workers.find(w=>w.id===e[0]),b=OSB.workers.find(w=>w.id===e[1]);
       if(!a||!b)return;
-      const NW=196,NH=118;
-      const x1=a.x+NW,y1=a.y+NH/2,x2=b.x,y2=b.y+NH/2;
-      const mx=(x1+x2)/2;
+      const x1=a.x+NW,y1=a.y+NH/2,x2=b.x,y2=b.y+NH/2,mx=(x1+x2)/2;
       const path='M'+x1+' '+y1+' C'+mx+' '+y1+','+mx+' '+y2+','+x2+' '+y2;
-      // Base line plus an animated dashed overlay. This reads as data moving
-      // but costs a fraction of an <animateMotion> particle per edge.
-      d+='<path d="'+path+'" fill="none" stroke="rgba(45,212,191,.15)" stroke-width="1.5"/>';
-      d+='<path class="eflow" d="'+path+'" fill="none" stroke="#2DD4BF" stroke-width="1.7" '+
-         'stroke-linecap="round" stroke-dasharray="3 15" style="animation-delay:'+(i*-0.28).toFixed(2)+'s"/>';
+      const col=(a.cluster&&a.cluster.c)||'45,212,191';
+      const key=e[0]+'|'+e[1];
+      // Base line plus an animated dashed overlay: reads as data moving for a
+      // fraction of the cost of an <animateMotion> particle per edge.
+      d+='<path class="ebase" data-e="'+key+'" d="'+path+'" fill="none" stroke="rgba('+col+',.17)" stroke-width="1.5"/>';
+      d+='<path class="eflow" data-e="'+key+'" d="'+path+'" fill="none" stroke="rgba('+col+',.95)" '+
+         'stroke-width="1.7" stroke-linecap="round" stroke-dasharray="3 15" '+
+         'style="animation-delay:'+(i*-0.28).toFixed(2)+'s"/>';
     });
     svg.innerHTML=d;
-    osbApply();osbMap();
   }
   function osbNodeHTML(w){
+    const col=(w.cluster&&w.cluster.c)||'45,212,191';
     return '<div class="wk s-'+w.status+'" id="wk-'+w.id+'" data-id="'+w.id+'" '+
-      'style="left:'+w.x+'px;top:'+w.y+'px" onclick="osbInspect(\''+w.id+'\')">'+
+      'style="left:'+w.x+'px;top:'+w.y+'px;--c:'+col+'">'+
+      '<span class="wk-sheen"></span><span class="wk-rim"></span>'+
       '<div class="wk-h"><div class="wk-i">'+w.ico+'</div><div class="wk-n">'+esc(w.name)+'</div><span class="wk-dot"></span></div>'+
       '<div class="wk-act">'+esc(w.act)+'</div>'+
       '<div class="wk-m"><div><b>'+w.conf+'%</b><span>confidence</span></div>'+
@@ -1994,6 +2065,8 @@
     const w=document.getElementById('osbWorld');if(!w)return;
     w.style.transform='translate3d('+OSB.view.x.toFixed(1)+'px,'+OSB.view.y.toFixed(1)+'px,0) scale('+OSB.view.k.toFixed(3)+')';
     const z=document.getElementById('osbZoomLbl');if(z)z.textContent=Math.round(OSB.view.k*100)+'%';
+    // Zoomed out, cards shed detail so the shape of the org reads first.
+    w.classList.toggle('lod',OSB.view.k<0.58);
     osbMapView();
   }
   function osbZoom(f,cx,cy){
@@ -2073,6 +2146,7 @@
     const w=OSB.workers.find(x=>x.id===id);if(!w)return;
     OSB.sel=id;
     document.querySelectorAll('.wk').forEach(n=>n.classList.toggle('sel',n.dataset.id===id));
+    osbTrace(id);
     const ins=document.getElementById('osbInspect');
     const ups=OSB.edges.filter(e=>e[1]===id).map(e=>e[0]),downs=OSB.edges.filter(e=>e[0]===id).map(e=>e[1]);
     const nm=x=>{const f=OSB.workers.find(w2=>w2.id===x);return f?f.name:x};
@@ -2095,10 +2169,60 @@
     ins.classList.add('open');
   }
   function osbCloseInspect(){document.getElementById('osbInspect').classList.remove('open');
-    document.querySelectorAll('.wk').forEach(n=>n.classList.remove('sel'));OSB.sel=null}
+    document.querySelectorAll('.wk').forEach(n=>n.classList.remove('sel'));
+    osbTrace(null);OSB.sel=null}
   function osbSavePrompt(id){
     const w=OSB.workers.find(x=>x.id===id),box=document.getElementById('osbPromptBox');
     if(w&&box){w.prompt=box.value;toast('Instructions saved for '+w.name)}
+  }
+
+  /* ---- path tracing: follow one worker's chain through the org ---- */
+  /* Depth-capped on purpose. Business Memory feeds back into Scoring, so an
+     unbounded walk reaches every worker from anywhere and "focus" would simply
+     highlight the whole board. Two hops shows a genuinely useful neighbourhood. */
+  function osbChain(id,depth){
+    depth=depth||2;
+    const up=new Set(),down=new Set();
+    const walkUp=(c,d)=>{if(d>depth)return;OSB.edges.forEach(e=>{
+      if(e[1]===c&&e[0]!==id&&!up.has(e[0])){up.add(e[0]);walkUp(e[0],d+1)}})};
+    const walkDn=(c,d)=>{if(d>depth)return;OSB.edges.forEach(e=>{
+      if(e[0]===c&&e[1]!==id&&!down.has(e[1])){down.add(e[1]);walkDn(e[1],d+1)}})};
+    walkUp(id,1);walkDn(id,1);
+    return {up:up,down:down};
+  }
+  function osbTrace(id){
+    const stage=document.getElementById('osbStage');if(!stage)return;
+    const nodes=document.querySelectorAll('.wk'),paths=document.querySelectorAll('#osbEdges path');
+    if(!id){
+      stage.classList.remove('tracing');
+      nodes.forEach(n=>n.classList.remove('tr'));paths.forEach(p=>p.classList.remove('on'));
+      return;
+    }
+    const {up,down}=osbChain(id);
+    const inChain=new Set([...up,...down,id]);
+    nodes.forEach(n=>n.classList.toggle('tr',inChain.has(n.dataset.id)));
+    paths.forEach(p=>{
+      const e=(p.dataset.e||'').split('|');
+      p.classList.toggle('on',inChain.has(e[0])&&inChain.has(e[1]));
+    });
+    stage.classList.add('tracing');
+  }
+
+  /* ---- keyboard navigation between workers ---- */
+  function osbStep(dx,dy){
+    const cur=OSB.workers.find(w=>w.id===OSB.sel)||OSB.workers[0];
+    if(!cur)return;
+    let best=null,bestD=Infinity;
+    OSB.workers.forEach(w=>{
+      if(w.id===cur.id)return;
+      const vx=w.x-cur.x,vy=w.y-cur.y;
+      if(dx&&Math.sign(vx)!==Math.sign(dx))return;
+      if(dy&&Math.sign(vy)!==Math.sign(dy))return;
+      // bias along the travel axis so movement feels directional, not nearest-any
+      const d=dx?Math.abs(vx)+Math.abs(vy)*2.5:Math.abs(vy)+Math.abs(vx)*2.5;
+      if(d<bestD){bestD=d;best=w}
+    });
+    if(best){osbPanTo(best.id);osbInspect(best.id)}
   }
 
   /* ---- paywall ---- */
@@ -2248,14 +2372,40 @@
   (function osbBind(){
     const st=document.getElementById('osbStage');if(!st)return;
     let drag=false,sx=0,sy=0,ox=0,oy=0;
+    // Dragging a worker moves it; a press that barely moves counts as a click.
+    let nd=null,nsx=0,nsy=0,nox=0,noy=0,moved=0;
     st.addEventListener('mousedown',e=>{
-      if(e.target.closest('.wk')||e.target.closest('.osb-inspect')||e.target.closest('.osb-copilot')||e.target.closest('.osb-map'))return;
+      const card=e.target.closest('.wk');
+      if(card){
+        const w=OSB.workers.find(x=>x.id===card.dataset.id);
+        if(w){nd=w;nsx=e.clientX;nsy=e.clientY;nox=w.x;noy=w.y;moved=0;
+              card.classList.add('dragging');e.preventDefault();}
+        return;
+      }
+      if(e.target.closest('.osb-inspect')||e.target.closest('.osb-copilot')||e.target.closest('.osb-map'))return;
       drag=true;sx=e.clientX;sy=e.clientY;ox=OSB.view.x;oy=OSB.view.y;st.classList.add('grabbing');
+    });
+    st.addEventListener('mousemove',e=>{
+      const card=e.target.closest&&e.target.closest('.wk');
+      if(card&&!nd){   // specular highlight follows the cursor across the card
+        const r=card.getBoundingClientRect();
+        card.style.setProperty('--mx',((e.clientX-r.left)/r.width*100).toFixed(1)+'%');
+        card.style.setProperty('--my',((e.clientY-r.top)/r.height*100).toFixed(1)+'%');
+      }
     });
     // Pan is throttled to one frame: applying on every mousemove forced a
     // layout read per event, which is what made dragging feel heavy.
     let raf=null,pend=null;
     window.addEventListener('mousemove',e=>{
+      if(nd){
+        const dx=(e.clientX-nsx)/OSB.view.k, dy=(e.clientY-nsy)/OSB.view.k;
+        moved=Math.abs(e.clientX-nsx)+Math.abs(e.clientY-nsy);
+        nd.x=nox+dx;nd.y=noy+dy;
+        const el=document.getElementById('wk-'+nd.id);
+        if(el){el.style.left=nd.x+'px';el.style.top=nd.y+'px'}
+        if(!raf)raf=requestAnimationFrame(()=>{raf=null;osbDrawEdges();osbTrace(OSB.sel);osbMap()});
+        return;
+      }
       if(drag){
         pend={x:ox+(e.clientX-sx),y:oy+(e.clientY-sy)};
         if(!raf)raf=requestAnimationFrame(()=>{
@@ -2266,7 +2416,15 @@
       if(OSB.explain){const n=e.target.closest&&e.target.closest('.wk');
         const w=n?OSB.workers.find(x=>x.id===n.dataset.id):null;osbTip(w,e);}
     });
-    window.addEventListener('mouseup',()=>{drag=false;st.classList.remove('grabbing')});
+    window.addEventListener('mouseup',()=>{
+      if(nd){
+        const el=document.getElementById('wk-'+nd.id);if(el)el.classList.remove('dragging');
+        if(moved<4)osbInspect(nd.id);      // barely moved: treat it as a click
+        else{osbDrawEdges();osbMap()}
+        nd=null;
+      }
+      drag=false;st.classList.remove('grabbing');
+    });
     st.addEventListener('wheel',e=>{
       e.preventDefault();const r=st.getBoundingClientRect();
       osbZoom(e.deltaY<0?1.11:0.9,e.clientX-r.left,e.clientY-r.top);
@@ -2289,6 +2447,10 @@
       if(e.key==='f')osbFit();
       if(e.key==='e')osbToggleExplain();
       if(e.key==='r')osbRun();
+      if(e.key==='ArrowRight'){e.preventDefault();osbStep(1,0)}
+      if(e.key==='ArrowLeft'){e.preventDefault();osbStep(-1,0)}
+      if(e.key==='ArrowDown'){e.preventDefault();osbStep(0,1)}
+      if(e.key==='ArrowUp'){e.preventDefault();osbStep(0,-1)}
     });
     window.addEventListener('resize',()=>{osbInvalidate();osbMapView()});
   })();
