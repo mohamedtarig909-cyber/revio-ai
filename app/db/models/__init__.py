@@ -8,6 +8,7 @@ from app.db.models.organization import Organization
 from app.db.models.page_view import PageView
 from app.db.models.pipeline_health import PipelineHealth
 from app.db.models.saved_system import SavedSystem
+from app.db.models.suppression import Suppression
 from app.db.models.user import User
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "PipelineHealth",
     "SavedSystem",
     "PageView",
+    "Suppression",
 ]

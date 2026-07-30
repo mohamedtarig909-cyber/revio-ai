@@ -31,6 +31,8 @@ from app.db.models.lead_analysis import LeadAnalysis
 from app.db.models.agent_run import AgentRun
 from app.db.models.page_view import PageView
 from app.db.models.saved_system import SavedSystem
+from app.db.models.suppression import Suppression
+from app.services.compliance import suppress
 from app.agents.revive_agent import ReviveAgent
 from app.orchestrator.engine import OrchestratorEngine
 
@@ -440,3 +442,48 @@ def analytics(days: int = Query(30, ge=1, le=365), _: None = Depends(require_adm
             "industry": s.industry, "goal": s.goal, "created_at": str(s.created_at),
         } for s in recent_systems],
     }
+
+
+# ---------------------------------------------------------------------------
+# Compliance / do-not-contact
+# ---------------------------------------------------------------------------
+
+@router.get("/suppressions")
+def list_suppressions(org_id: UUID | None = None, limit: int = Query(200, ge=1, le=1000),
+                      _: None = Depends(require_admin)):
+    """The do-not-contact list. Optionally scoped to one workspace."""
+    with SyncSessionLocal() as db:
+        stmt = select(Suppression).order_by(Suppression.created_at.desc()).limit(limit)
+        if org_id:
+            stmt = stmt.where(Suppression.organization_id == org_id)
+        rows = db.execute(stmt).scalars().all()
+        total = db.scalar(select(func.count()).select_from(Suppression)) or 0
+        return {"total": total, "items": [{
+            "id": str(r.id), "organization_id": str(r.organization_id),
+            "channel": r.channel, "value": r.value, "reason": r.reason,
+            "source": r.source, "created_at": str(r.created_at),
+        } for r in rows]}
+
+
+@router.post("/suppressions")
+def add_suppression(org_id: UUID, value: str = Query(..., min_length=1),
+                    channel: str = Query("email"),
+                    _: None = Depends(require_admin)):
+    """Manually add someone to the do-not-contact list."""
+    if channel not in ("email", "sms", "all"):
+        raise HTTPException(400, "channel must be email, sms or all")
+    with SyncSessionLocal() as db:
+        added = suppress(db, org_id, channel, value, reason="manual", source="admin")
+    return {"added": added, "value": value, "channel": channel}
+
+
+@router.delete("/suppressions/{sup_id}")
+def remove_suppression(sup_id: UUID, _: None = Depends(require_admin)):
+    """Remove an entry. Use only to correct a mistake — never to re-enable outreach."""
+    with SyncSessionLocal() as db:
+        row = db.get(Suppression, sup_id)
+        if not row:
+            raise HTTPException(404, "Not found")
+        db.delete(row)
+        db.commit()
+    return {"removed": True}

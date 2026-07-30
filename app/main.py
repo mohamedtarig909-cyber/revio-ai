@@ -84,6 +84,9 @@ async def guide_page():
 from app.api.routes.seo_pages import router as seo_router  # noqa: E402
 app.include_router(seo_router)
 
+from app.api.routes.unsubscribe import router as unsub_router  # noqa: E402
+app.include_router(unsub_router)
+
 
 @app.get("/sitemap.xml", include_in_schema=False)
 async def sitemap():

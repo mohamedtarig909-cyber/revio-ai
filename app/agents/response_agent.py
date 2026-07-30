@@ -15,6 +15,7 @@ from app.db.models.lead import Lead, LeadStatus
 from app.db.models.organization import Organization
 from app.db.models.pipeline_health import PipelineHealth
 from app.db.models.user import User
+from app.services.compliance import suppress
 from app.services.llm.llm_service import LLMService
 from app.services.messaging.email_service import EmailService
 
@@ -28,6 +29,10 @@ class ResponseAgent:
 
     INTERESTED_KEYWORDS = {"interested", "yes", "schedule", "meeting", "call", "demo", "let's talk", "sounds good"}
     ESCALATION_KEYWORDS = {"unsubscribe", "stop", "legal", "complaint", "angry", "remove me"}
+    # A reply containing any of these is a request never to be contacted again.
+    # These do more than escalate — they write a permanent suppression row.
+    OPTOUT_KEYWORDS = {"unsubscribe", "unsub", "stop", "remove me", "opt out",
+                       "optout", "take me off", "do not contact", "don't contact"}
 
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -51,6 +56,7 @@ class ResponseAgent:
             processed = 0
             reactivated = 0
             escalations = 0
+            opted_out = 0
 
             for campaign in pending:
                 inbound = self._check_inbound_reply(campaign)
@@ -66,6 +72,17 @@ class ResponseAgent:
                 if not lead:
                     continue
 
+                # Honor opt-outs first and unconditionally, whatever else the
+                # reply says. Suppression is permanent and never auto-removed.
+                if any(k in (inbound or "").lower() for k in self.OPTOUT_KEYWORDS):
+                    for ch, val in (("email", lead.email), ("sms", lead.phone)):
+                        if val:
+                            suppress(self.db, organization_id, ch, val,
+                                     reason="unsubscribed", source="reply_keyword")
+                    lead.lead_status = LeadStatus.ESCALATED
+                    opted_out += 1
+                    continue
+
                 if intent.get("needs_human_escalation"):
                     lead.lead_status = LeadStatus.ESCALATED
                     escalations += 1
@@ -79,6 +96,7 @@ class ResponseAgent:
                 "responses_processed": processed,
                 "leads_reactivated": reactivated,
                 "escalations": escalations,
+                "opted_out": opted_out,
             }
             run_logger.complete(result)
             return result

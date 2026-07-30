@@ -12,6 +12,7 @@ from app.db.models.campaign import Campaign, CampaignChannel, CampaignStatus
 from app.db.models.lead import Lead
 from app.db.models.lead_analysis import LeadAnalysis
 from app.db.models.organization import Organization
+from app.services.compliance import is_suppressed
 from app.services.messaging.email_service import EmailService
 from app.services.messaging.sms_service import SMSService
 
@@ -51,11 +52,23 @@ class ExecutionAgent:
 
             leads = self.db.execute(stmt).scalars().all()
             sent_count = 0
+            suppressed_count = 0
             results: list[dict] = []
 
             for lead in leads:
                 channel = self._choose_channel(lead)
                 if not channel:
+                    continue
+
+                # Do-not-contact check. This runs before anything is created or
+                # sent, and a failure inside it blocks the send rather than
+                # allowing it — an opt-out must never be overridden by a bug.
+                target = lead.phone if channel in (CampaignChannel.SMS,
+                                                   CampaignChannel.WHATSAPP) else lead.email
+                check_channel = "sms" if channel in (CampaignChannel.SMS,
+                                                     CampaignChannel.WHATSAPP) else "email"
+                if is_suppressed(self.db, organization_id, check_channel, target or ""):
+                    suppressed_count += 1
                     continue
 
                 message_data = self._get_message_content(lead)
@@ -85,7 +98,8 @@ class ExecutionAgent:
                     logger.error("Campaign send failed for lead %s: %s", lead.id, exc)
 
             self.db.commit()
-            result = {"campaigns_sent": sent_count, "results": results}
+            result = {"campaigns_sent": sent_count,
+                      "suppressed_skipped": suppressed_count, "results": results}
             run_logger.complete(result)
             return result
         except Exception as exc:

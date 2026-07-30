@@ -14,9 +14,9 @@
 {"@context":"https://schema.org","@graph":[
  {"@type":"Organization","@id":"https://revioai.site/#org","name":"Revio AI","url":"https://revioai.site/","description":"AI lead-reactivation platform: scores dead leads, diagnoses why they went cold, and drafts re-engagement campaigns that recover lost revenue."},
  {"@type":"SoftwareApplication","name":"Revio AI","applicationCategory":"BusinessApplication","operatingSystem":"Web","url":"https://revioai.site/","description":"Revio AI scores every dead lead 0–100, diagnoses the cause it went cold (no follow-up, timing, price, competitor), predicts the best re-contact window, and drafts personalized revival campaigns with human approval.","offers":[
-  {"@type":"Offer","name":"Starter","price":"149","priceCurrency":"USD","description":"Up to 2,500 leads/mo, scoring + AI diagnosis + email drafts"},
-  {"@type":"Offer","name":"Growth","price":"399","priceCurrency":"USD","description":"Up to 15,000 leads/mo, multi-channel, best-window timing"},
-  {"@type":"Offer","name":"Scale","price":"899","priceCurrency":"USD","description":"Up to 75,000 leads/mo, all engines, benchmarks"}],
+  {"@type":"Offer","name":"Starter","price":"79","priceCurrency":"USD","description":"Up to 2,500 leads/mo, scoring + AI diagnosis + email drafts"},
+  {"@type":"Offer","name":"Growth","price":"149","priceCurrency":"USD","description":"Up to 15,000 leads/mo, multi-channel, best-window timing"},
+  {"@type":"Offer","name":"Scale","price":"349","priceCurrency":"USD","description":"Up to 75,000 leads/mo, all engines, benchmarks"}],
   "publisher":{"@id":"https://revioai.site/#org"}},
  {"@type":"FAQPage","mainEntity":[
   {"@type":"Question","name":"How is Revio AI different from my CRM's email tool?","acceptedAnswer":{"@type":"Answer","text":"A CRM sends what you tell it. Revio AI decides who is worth contacting: it scores each dead lead 0–100, diagnoses why it went cold, ranks leads by recoverable dollars, and drafts the message. Scoring is computed in code, reproducible and auditable."}},
@@ -362,6 +362,189 @@
   .livedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--signal);box-shadow:0 0 8px var(--signal);margin-right:7px;animation:pulse 1.6s infinite}
   .sim-chip.flash{animation:chipflash .8s ease}
   @keyframes chipflash{0%{background:rgba(45,212,191,.45);color:#fff;box-shadow:0 0 0 1px rgba(45,212,191,.5)}100%{}}
+
+  /* ══════════════ System Board · AI Operating System canvas ══════════════ */
+  .osb{--n:#0A0C0B;--glass:rgba(20,26,24,.72);--line:rgba(255,255,255,.09);
+    position:relative;border-radius:20px;overflow:hidden;background:#070908;
+    border:1px solid var(--line);height:min(74vh,760px);display:flex;flex-direction:column;
+    box-shadow:0 30px 90px rgba(0,0,0,.5)}
+  .osb-top{display:flex;align-items:center;gap:14px;padding:11px 15px;flex-wrap:wrap;
+    background:linear-gradient(180deg,rgba(255,255,255,.045),transparent);
+    border-bottom:1px solid var(--line);backdrop-filter:blur(20px);z-index:6;flex:none}
+  .osb-id{display:flex;align-items:center;gap:9px;min-width:0}
+  .osb-id b{font-family:var(--display);font-size:13.5px;font-weight:600;letter-spacing:-.2px;white-space:nowrap}
+  .osb-sub{font-family:var(--mono);font-size:11px;color:var(--dim);white-space:nowrap}
+  .osb-live{width:7px;height:7px;border-radius:50%;background:var(--signal);
+    box-shadow:0 0 10px var(--signal);animation:pulse 2.4s infinite;flex:none}
+  .osb-health{display:flex;gap:15px;margin-left:auto;flex-wrap:wrap;font-family:var(--mono)}
+  .osb-health .h{display:flex;flex-direction:column;line-height:1.25}
+  .osb-health .h b{font-size:13px;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+  .osb-health .h span{font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.7px}
+  .osb-tools{display:flex;gap:6px}
+  .osb-btn{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted);
+    border-radius:9px;padding:6px 11px;font-size:11.5px;font-family:var(--mono);cursor:pointer;
+    transition:.18s cubic-bezier(.2,.8,.2,1);white-space:nowrap}
+  .osb-btn:hover{background:rgba(255,255,255,.09);color:var(--text);transform:translateY(-1px)}
+  .osb-btn.on{background:rgba(167,139,250,.16);border-color:rgba(167,139,250,.4);color:var(--violet)}
+  .osb-btn.pri{background:var(--signal);border-color:var(--signal);color:#04211C;font-weight:600}
+
+  .osb-stage{position:relative;flex:1;overflow:hidden;cursor:grab;
+    background:#070908;
+    background-image:radial-gradient(rgba(255,255,255,.055) 1px,transparent 1px);
+    background-size:26px 26px}
+  .osb-stage.grabbing{cursor:grabbing}
+  .osb-stage.explain{cursor:help}
+  .osb-world{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
+  .osb-edges{position:absolute;top:0;left:0;pointer-events:none;overflow:visible}
+
+  .osb-empty{position:absolute;inset:0;display:none;place-items:center;text-align:center;
+    color:var(--dim);font-size:13.5px;padding:30px;font-family:var(--mono)}
+  .osb-empty.show{display:grid}
+
+  /* ---- worker node ---- */
+  .wk{position:absolute;width:196px;border-radius:15px;padding:13px 14px;cursor:pointer;
+    background:linear-gradient(160deg,rgba(28,34,32,.92),rgba(16,20,19,.92));
+    border:1px solid var(--line);backdrop-filter:blur(14px);
+    transition:transform .34s cubic-bezier(.16,1,.3,1),box-shadow .34s,border-color .25s;
+    box-shadow:0 6px 22px rgba(0,0,0,.42)}
+  .wk:hover{transform:translateY(-4px) scale(1.022);border-color:rgba(45,212,191,.42);
+    box-shadow:0 18px 46px rgba(0,0,0,.55),0 0 0 1px rgba(45,212,191,.18)}
+  .wk.sel{border-color:var(--signal);box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 0 1px var(--signal),0 0 34px rgba(45,212,191,.22)}
+  .wk-h{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .wk-i{width:29px;height:29px;border-radius:9px;display:grid;place-items:center;font-size:14px;flex:none;
+    background:linear-gradient(135deg,rgba(45,212,191,.2),rgba(167,139,250,.16));
+    border:1px solid rgba(255,255,255,.07)}
+  .wk-n{font-family:var(--display);font-size:12.5px;font-weight:600;letter-spacing:-.15px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .wk-dot{width:6px;height:6px;border-radius:50%;flex:none;background:var(--dim)}
+  .wk.s-run .wk-dot{background:var(--signal);box-shadow:0 0 9px var(--signal);animation:pulse 1.1s infinite}
+  .wk.s-done .wk-dot{background:var(--signal);box-shadow:0 0 7px var(--signal)}
+  .wk.s-idle .wk-dot{animation:breathe 3.6s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:.28}50%{opacity:.85}}
+  .wk-act{font-size:10.5px;color:var(--dim);line-height:1.42;min-height:29px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .wk-m{display:flex;gap:9px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(255,255,255,.055);
+    font-family:var(--mono)}
+  .wk-m div{flex:1;min-width:0}
+  .wk-m b{display:block;font-size:11px;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wk-m span{font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
+  .wk.s-run{border-color:rgba(45,212,191,.5);
+    box-shadow:0 10px 34px rgba(0,0,0,.5),0 0 0 1px rgba(45,212,191,.3),0 0 40px rgba(45,212,191,.16)}
+  .wk.s-done{border-color:rgba(45,212,191,.26)}
+  .wk.dim{opacity:.32;filter:saturate(.4)}
+
+  /* cluster frame */
+  .cl{position:absolute;border-radius:19px;border:1px dashed rgba(255,255,255,.12);
+    background:rgba(255,255,255,.017);pointer-events:none}
+  .cl-t{position:absolute;top:-11px;left:15px;font-family:var(--mono);font-size:9.5px;
+    letter-spacing:1.3px;text-transform:uppercase;color:var(--dim);
+    background:#0A0C0B;padding:2px 9px;border-radius:99px;border:1px solid rgba(255,255,255,.09)}
+
+  /* ---- minimap / zoom ---- */
+  .osb-map{position:absolute;right:13px;bottom:13px;width:158px;height:96px;border-radius:11px;
+    background:rgba(8,11,10,.86);border:1px solid var(--line);backdrop-filter:blur(16px);
+    overflow:hidden;z-index:5;cursor:pointer}
+  .osb-map i{position:absolute;border-radius:2px;background:rgba(45,212,191,.55)}
+  .osb-mapview{position:absolute;border:1.5px solid var(--signal);border-radius:3px;
+    background:rgba(45,212,191,.1);pointer-events:none}
+  .osb-zoom{position:absolute;left:13px;bottom:13px;display:flex;align-items:center;gap:2px;z-index:5;
+    background:rgba(8,11,10,.86);border:1px solid var(--line);border-radius:10px;
+    backdrop-filter:blur(16px);padding:3px}
+  .osb-zoom button{width:26px;height:24px;background:transparent;border:none;color:var(--muted);
+    cursor:pointer;font-size:14px;border-radius:7px;transition:.15s}
+  .osb-zoom button:hover{background:rgba(255,255,255,.08);color:var(--text)}
+  .osb-zoom span{font-family:var(--mono);font-size:10.5px;color:var(--dim);min-width:38px;text-align:center}
+
+  /* ---- inspector ---- */
+  .osb-inspect{position:absolute;top:0;right:0;width:min(372px,88%);height:100%;z-index:8;
+    background:rgba(11,14,13,.93);backdrop-filter:blur(28px);border-left:1px solid var(--line);
+    transform:translateX(102%);transition:transform .42s cubic-bezier(.16,1,.3,1);
+    overflow-y:auto;padding:19px}
+  .osb-inspect.open{transform:none}
+  .osb-inspect h4{font-family:var(--display);font-size:16px;font-weight:600;letter-spacing:-.3px;
+    display:flex;align-items:center;gap:9px}
+  .osb-sect{margin-top:15px;padding-top:13px;border-top:1px solid rgba(255,255,255,.06)}
+  .osb-sect .lb{font-family:var(--mono);font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;
+    color:var(--dim);margin-bottom:6px}
+  .osb-sect p{font-size:12.8px;color:var(--muted);line-height:1.6;margin:0}
+  .osb-kv{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .osb-kv div{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);
+    border-radius:10px;padding:9px 11px}
+  .osb-kv b{display:block;font-family:var(--mono);font-size:13px;color:var(--text);font-variant-numeric:tabular-nums}
+  .osb-kv span{font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
+  .osb-tag{display:inline-block;font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:6px;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--muted);margin:0 5px 5px 0}
+  .osb-x{background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:15px;margin-left:auto}
+  .osb-x:hover{color:var(--text)}
+  .osb-prompt{width:100%;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.09);
+    border-radius:10px;color:var(--muted);font-family:var(--mono);font-size:11.5px;padding:10px;
+    line-height:1.6;resize:vertical;min-height:88px}
+  .osb-prompt:focus{outline:none;border-color:var(--signal)}
+
+  /* ---- copilot ---- */
+  .osb-copilot{position:absolute;top:0;right:0;width:min(340px,88%);height:100%;z-index:9;
+    background:rgba(11,14,13,.95);backdrop-filter:blur(28px);border-left:1px solid var(--line);
+    transform:translateX(102%);transition:transform .42s cubic-bezier(.16,1,.3,1);
+    display:flex;flex-direction:column}
+  .osb-copilot.open{transform:none}
+  .osb-cp-head{display:flex;align-items:center;gap:9px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .osb-cp-head b{font-family:var(--display);font-size:13.5px;font-weight:600}
+  .osb-cp-log{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:11px}
+  .osb-msg{font-size:12.8px;line-height:1.62;border-radius:12px;padding:10px 13px;max-width:94%}
+  .osb-msg.u{background:rgba(45,212,191,.13);border:1px solid rgba(45,212,191,.24);align-self:flex-end;color:var(--text)}
+  .osb-msg.a{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.075);color:var(--muted)}
+  .osb-msg.a b{color:var(--text)}
+  .osb-cp-chips{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 10px}
+  .osb-chip{background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted);
+    border-radius:99px;padding:5px 11px;font-size:11px;cursor:pointer;transition:.16s}
+  .osb-chip:hover{border-color:var(--signal);color:var(--signal)}
+  .osb-cp-in{display:flex;gap:7px;padding:12px 16px;border-top:1px solid var(--line)}
+  .osb-cp-in input{flex:1;background:rgba(0,0,0,.42);border:1px solid var(--line);border-radius:10px;
+    padding:9px 12px;color:var(--text);font-size:12.5px;font-family:inherit}
+  .osb-cp-in input:focus{outline:none;border-color:var(--signal)}
+  .osb-cp-in button{background:var(--signal);border:none;color:#04211C;border-radius:10px;
+    width:36px;cursor:pointer;font-size:14px;font-weight:700}
+  .osb-cp-open{position:absolute;right:13px;top:13px;z-index:5;background:rgba(167,139,250,.16);
+    border:1px solid rgba(167,139,250,.36);color:var(--violet);border-radius:99px;
+    padding:7px 14px;font-size:11.5px;font-family:var(--mono);cursor:pointer;
+    backdrop-filter:blur(14px);transition:.18s}
+  .osb-cp-open:hover{background:rgba(167,139,250,.26);transform:translateY(-1px)}
+
+  /* ---- command palette ---- */
+  .osb-pal{position:fixed;inset:0;z-index:120;display:none;align-items:flex-start;
+    justify-content:center;padding-top:14vh;background:rgba(0,0,0,.62);backdrop-filter:blur(7px)}
+  .osb-pal.open{display:flex}
+  .osb-pal .box{width:min(540px,92vw);background:rgba(18,22,21,.97);border:1px solid rgba(255,255,255,.13);
+    border-radius:16px;overflow:hidden;box-shadow:0 34px 90px rgba(0,0,0,.62);
+    animation:palIn .3s cubic-bezier(.16,1,.3,1)}
+  @keyframes palIn{from{opacity:0;transform:translateY(-14px) scale(.97)}to{opacity:1;transform:none}}
+  .osb-pal input{width:100%;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.1);
+    padding:16px 18px;color:var(--text);font-size:14.5px;font-family:inherit}
+  .osb-pal input:focus{outline:none}
+  .osb-pal .res{max-height:340px;overflow-y:auto;padding:7px}
+  .osb-pal .r{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;
+    cursor:pointer;font-size:13px;color:var(--muted)}
+  .osb-pal .r:hover,.osb-pal .r.on{background:rgba(45,212,191,.13);color:var(--text)}
+  .osb-pal .r .k{font-family:var(--mono);font-size:10px;color:var(--dim);margin-left:auto}
+
+  /* explain tooltip */
+  .osb-tip{position:fixed;z-index:130;max-width:290px;background:rgba(16,20,19,.97);
+    border:1px solid rgba(167,139,250,.34);border-radius:12px;padding:12px 14px;
+    font-size:12px;line-height:1.6;color:var(--muted);pointer-events:none;display:none;
+    box-shadow:0 20px 50px rgba(0,0,0,.6);backdrop-filter:blur(16px)}
+  .osb-tip.show{display:block;animation:fade .2s}
+  .osb-tip b{color:var(--violet);display:block;margin-bottom:4px;font-family:var(--display);font-size:12.5px}
+
+  @media(max-width:760px){
+    .osb{height:min(70vh,600px)}
+    .osb-health{display:none}
+    .osb-map{width:110px;height:70px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .wk,.osb-inspect,.osb-copilot{transition:none}
+    .wk-dot,.osb-live{animation:none}
+  }
   .fnode.done{border-color:rgba(45,212,191,.35)}
   .fnode.in{opacity:1;transform:none}
   .fnode:hover{border-color:var(--signal);transform:translateY(-3px)}
@@ -648,7 +831,7 @@
   <h2>Pays for itself with <span class="serif-accent">one recovered deal.</span></h2>
   <p class="lead">Every feature live. 14-day trial · cancel anytime · secure checkout via Whop.</p>
   <div class="prices">
-    <div class="price glass pop"><div class="tag">Starter</div><div class="amt">$149<small>/mo</small></div>
+    <div class="price glass pop"><div class="tag">Starter</div><div class="amt">$79<small>/mo</small></div>
       <ul>
         <li>Up to <b style="color:var(--text)">2,500</b> leads / mo</li>
         <li><b style="color:var(--text)">Unlimited</b> System Builder generations</li>
@@ -664,7 +847,7 @@
         <li>CSV import · 1 client workspace</li>
       </ul>
       <button class="btn btn-primary" data-plan="starter" onclick="checkout(this)">Get started →</button></div>
-    <div class="price glass"><div class="tag">Growth</div><div class="amt">$399<small>/mo</small></div>
+    <div class="price glass"><div class="tag">Growth</div><div class="amt">$149<small>/mo</small></div>
       <ul>
         <li>Up to <b style="color:var(--text)">15,000</b> leads / mo</li>
         <li>Everything in Starter, plus:</li>
@@ -678,7 +861,7 @@
         <li>All industry models · 5 team seats</li>
       </ul>
       <button class="btn btn-ghost" data-plan="growth" onclick="checkout(this)">Get started</button></div>
-    <div class="price glass"><div class="tag">Scale</div><div class="amt">$899<small>/mo</small></div>
+    <div class="price glass"><div class="tag">Scale</div><div class="amt">$349<small>/mo</small></div>
       <ul>
         <li>Up to <b style="color:var(--text)">75,000</b> leads / mo</li>
         <li>Everything in Growth, plus:</li>
@@ -791,9 +974,49 @@
       <div class="panel" data-panel="decay"><h2>Lead decay radar</h2><div class="empty glass" style="margin-top:20px">Active leads cooling off surface here so you intervene before they die.</div></div>
       <div class="panel" data-panel="winback"><h2>Win-back engine</h2><div class="empty glass" style="margin-top:20px">Past customers with repurchase signals, matched to your best-converting cohort.</div></div>
       <div class="panel" data-panel="revenue"><h2>Recovered revenue &amp; daily report</h2><div class="empty glass" id="revenuePanel" style="margin-top:20px">Your daily AI executive report and recovered-revenue ledger appear here after the first scan.</div></div>
-      <div class="panel" data-panel="board"><h2>System board</h2><p style="color:var(--dim);font-family:var(--mono);font-size:13px" id="boardHint">Your assembled system, node by node. Click any node to inspect it.</p><div id="boardHost" style="margin-top:6px"><div class="empty glass" style="margin-top:14px">No system yet. Use the builder on the homepage and it will appear here.</div></div></div>
+      <div class="panel" data-panel="board">
+        <div class="osb" id="osb">
+          <div class="osb-top">
+            <div class="osb-id">
+              <span class="osb-live"></span>
+              <b id="osbTitle">Your AI workforce</b>
+              <span class="osb-sub" id="osbSub">assembled</span>
+            </div>
+            <div class="osb-health" id="osbHealth"></div>
+            <div class="osb-tools">
+              <button class="osb-btn" onclick="osbToggleExplain()" id="osbExplainBtn" title="Explain mode">◍ Explain</button>
+              <button class="osb-btn" onclick="osbPalette(true)" title="Command palette">⌘K</button>
+              <button class="osb-btn" onclick="osbFit()" title="Fit to screen">⤢ Fit</button>
+              <button class="osb-btn pri" onclick="osbRun()" id="osbRunBtn">▶ Run</button>
+            </div>
+          </div>
+          <div class="osb-stage" id="osbStage">
+            <div class="osb-world" id="osbWorld">
+              <svg class="osb-edges" id="osbEdges" width="2400" height="1400"></svg>
+              <div id="osbNodes"></div>
+            </div>
+            <div class="osb-empty" id="osbEmpty">No system yet. Build one on the homepage and your AI workforce appears here.</div>
+            <div class="osb-map" id="osbMap" title="Mini-map"><div class="osb-mapview" id="osbMapView"></div></div>
+            <div class="osb-zoom">
+              <button onclick="osbZoom(1.25)">+</button><span id="osbZoomLbl">100%</span><button onclick="osbZoom(.8)">−</button>
+            </div>
+            <aside class="osb-inspect" id="osbInspect"></aside>
+            <aside class="osb-copilot" id="osbCopilot">
+              <div class="osb-cp-head"><b>Ask the system</b><button class="osb-x" onclick="osbCopilotOpen(false)">✕</button></div>
+              <div class="osb-cp-log" id="osbCpLog"></div>
+              <div class="osb-cp-chips" id="osbCpChips"></div>
+              <form class="osb-cp-in" onsubmit="osbAsk(event)">
+                <input id="osbCpInput" placeholder="Ask about any worker…" autocomplete="off"/>
+                <button type="submit">↑</button>
+              </form>
+            </aside>
+            <button class="osb-cp-open" id="osbCpOpen" onclick="osbCopilotOpen(true)">✦ Ask</button>
+          </div>
+        </div>
+        <div id="boardHost" style="display:none"></div>
+      </div>
       <div class="panel" data-panel="integrations"><h2>Integrations</h2><div class="empty glass intwrap" style="margin-top:20px">HubSpot, Salesforce, Twilio and more connect here. Included with your plan and set up with you during onboarding.</div></div>
-      <div class="panel" data-panel="billing"><h2>Team &amp; billing</h2><div class="empty glass" style="margin-top:20px;padding:34px"><p style="margin-bottom:18px">Billed via Whop. Manage your subscription:</p><div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><button class="btn btn-ghost" data-plan="starter" onclick="checkout(this)">Starter $149</button><button class="btn btn-primary" data-plan="growth" onclick="checkout(this)">Growth $399</button><button class="btn btn-ghost" data-plan="scale" onclick="checkout(this)">Scale $899</button></div></div></div>
+      <div class="panel" data-panel="billing"><h2>Team &amp; billing</h2><div class="empty glass" style="margin-top:20px;padding:34px"><p style="margin-bottom:18px">Billed via Whop. Manage your subscription:</p><div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><button class="btn btn-ghost" data-plan="starter" onclick="checkout(this)">Starter $79</button><button class="btn btn-primary" data-plan="growth" onclick="checkout(this)">Growth $149</button><button class="btn btn-ghost" data-plan="scale" onclick="checkout(this)">Scale $349</button></div></div></div>
     </div>
   </div>
 </div></div>
@@ -804,9 +1027,9 @@
   <h3>Unlock the command center</h3>
   <p class="msub">The command center is for subscribers. Pick a plan to start your 14-day trial, secure checkout via Whop.</p>
   <div class="paywall-plans">
-    <div class="pw" data-plan="starter" onclick="checkout(this)"><div class="t">Starter</div><div class="a">$149<small>/mo</small></div><p>2,500 leads · scoring + email</p></div>
-    <div class="pw pop" data-plan="growth" onclick="checkout(this)"><div class="t">Growth</div><div class="a">$399<small>/mo</small></div><p>15,000 leads · multi-channel</p></div>
-    <div class="pw" data-plan="scale" onclick="checkout(this)"><div class="t">Scale</div><div class="a">$899<small>/mo</small></div><p>75,000 leads · all engines</p></div>
+    <div class="pw" data-plan="starter" onclick="checkout(this)"><div class="t">Starter</div><div class="a">$79<small>/mo</small></div><p>2,500 leads · scoring + email</p></div>
+    <div class="pw pop" data-plan="growth" onclick="checkout(this)"><div class="t">Growth</div><div class="a">$149<small>/mo</small></div><p>15,000 leads · multi-channel</p></div>
+    <div class="pw" data-plan="scale" onclick="checkout(this)"><div class="t">Scale</div><div class="a">$349<small>/mo</small></div><p>75,000 leads · all engines</p></div>
   </div>
   <p class="msub" style="margin:14px 0 4px"><b style="color:var(--gold)">Important:</b> pay with the <b>same email</b> you signed up with, access unlocks automatically.</p>
   <div class="ob-actions"><button class="btn btn-primary" onclick="recheckAccess()">I've paid, check my access ✓</button></div>
@@ -857,9 +1080,9 @@
     <h3>Choose your plan</h3>
     <p class="msub">Unlock your workspace, secure checkout via Whop.<br><b style="color:var(--gold)">Important:</b> pay with the <b>same email</b> you signed up with.</p>
     <div class="paywall-plans">
-      <div class="pw" data-plan="starter" onclick="checkout(this)"><div class="t">Starter</div><div class="a">$149<small>/mo</small></div><p>2,500 leads · scoring + email</p></div>
-      <div class="pw pop" data-plan="growth" onclick="checkout(this)"><div class="t">Growth</div><div class="a">$399<small>/mo</small></div><p>15,000 leads · multi-channel</p></div>
-      <div class="pw" data-plan="scale" onclick="checkout(this)"><div class="t">Scale</div><div class="a">$899<small>/mo</small></div><p>75,000 leads · all engines</p></div>
+      <div class="pw" data-plan="starter" onclick="checkout(this)"><div class="t">Starter</div><div class="a">$79<small>/mo</small></div><p>2,500 leads · scoring + email</p></div>
+      <div class="pw pop" data-plan="growth" onclick="checkout(this)"><div class="t">Growth</div><div class="a">$149<small>/mo</small></div><p>15,000 leads · multi-channel</p></div>
+      <div class="pw" data-plan="scale" onclick="checkout(this)"><div class="t">Scale</div><div class="a">$349<small>/mo</small></div><p>75,000 leads · all engines</p></div>
     </div>
     <div class="ob-actions"><button class="btn btn-primary btn-lg" onclick="obVerifyPaid()">I've paid, verify my access ✓</button></div>
   </div>
@@ -1045,7 +1268,7 @@
   }
   async function refreshBoardLive(){
     if(previewMode||!AUTH_TOKEN)return;
-    const bh=document.getElementById('boardHost'); if(!bh||!bh.querySelector('.flow'))return;   // board not in live mode
+    if(!OSB.built)return;   // canvas not built yet
     try{
       const headers=await authHeaders();
       const r=await fetch(API_BASE+'/api/v1/dashboard/overview',{headers});
@@ -1056,11 +1279,12 @@
       tweenMetric('fm2',Math.round(ov.revenue_at_risk||0),'$','');
       const stt=document.getElementById('boardStatus');
       if(stt)stt.innerHTML='<span class="livedot"></span>Live · '+(ov.total_leads||0).toLocaleString()+' leads · health '+(ov.pipeline_health_score!=null?Math.round(ov.pipeline_health_score):'—')+'/100';
+      try{OSB.live=ov;osbHealth();}catch(e){}
       boardLastFetch=Date.now(); updateBoardAgo();
     }catch(e){}
   }
   document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&boardPollTimer)refreshBoardLive(); });
-  function nav(el){document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));el.classList.add('active');const p=el.dataset.p;document.querySelectorAll('.panel').forEach(pn=>pn.classList.toggle('active',pn.dataset.panel===p))}
+  function nav(el){document.querySelectorAll('.navitem').forEach(n=>n.classList.remove('active'));el.classList.add('active');const p=el.dataset.p;document.querySelectorAll('.panel').forEach(pn=>pn.classList.toggle('active',pn.dataset.panel===p));if(p==='board')setTimeout(()=>{try{osbFit()}catch(e){}},60)}
 
   /* ── Live client system, no demo data. Clients see only what they upload. ── */
   const API_BASE = "";   // same-origin (FastAPI serves this site + the API)
@@ -1151,7 +1375,7 @@
             if(bh){bh.innerHTML='';
               selType=sd.industry||bp.industry||selType;selGoal=sd.goal||bp.goal||selGoal;
               const live={total_leads:ov.total_leads,dormant_leads:ov.dormant_leads,reactivated_leads:ov.reactivated_leads,campaigns_sent_24h:ov.campaigns_sent_24h,responses_24h:ov.responses_24h,revenue_at_risk:ov.revenue_at_risk,health:ov.pipeline_health_score};
-              try{renderFlow(sp,'boardHost',live);}catch(e){}
+              try{osbBuild(sp,live);}catch(e){}
               /* renderFlow re-stages a pending_system; this one is already claimed, so clear it */
               try{localStorage.removeItem('revio_pending_system');}catch(e){}
               const bhint=document.getElementById('boardHint');
@@ -1426,7 +1650,8 @@
     const lf=document.getElementById('bFlow');if(lf)lf.innerHTML='';
     const lr=document.getElementById('bResult');if(lr)lr.innerHTML='';
     const bh=document.getElementById('boardHost');
-    if(bh){bh.innerHTML='';renderFlow(s,'boardHost');setTimeout(startPreviewSim,700);}   // auto-play the pipeline so the board looks alive
+    try{osbBuild(s,null);}catch(e){}
+    setTimeout(startPreviewSim,700);   // auto-play so the workforce looks alive
     pvSet('[data-panel="integrations"] .intwrap',
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;text-align:left">'+
       ['HubSpot|CRM sync','Salesforce|CRM sync','Pipedrive|CRM sync','Twilio|SMS sending','SendGrid|Email sending','Slack|Alerts and briefs','Calendly|Booking links','Zapier|5,000+ apps','Whop|Billing']
@@ -1463,7 +1688,12 @@
     function tick(t){const p=Math.min((t-t0)/dur,1);const v=Math.floor((1-Math.pow(1-p,3))*target);el.textContent=pre+v.toLocaleString()+suf;if(p<1)requestAnimationFrame(tick)}requestAnimationFrame(tick)}
   let simBusy=false, simLoop=false, simLoopTimer=null;
   function stopPreviewSim(){ simLoop=false; if(simLoopTimer){clearTimeout(simLoopTimer);simLoopTimer=null;} }
-  function startPreviewSim(){ stopPreviewSim(); simRun(true); }   // auto-play the pipeline, looped, in preview
+  function startPreviewSim(){ stopPreviewSim(); simLoop=true; osbLoopRun(); }
+  function osbLoopRun(){
+    if(!simLoop)return;
+    try{osbRun()}catch(e){}
+    simLoopTimer=setTimeout(osbLoopRun,7600);   // one pass (~6s) then breathe, so it always looks alive
+  }
   function simRun(loop){
     const sp=bSpec||boardSpec;
     if(simBusy||!sp)return; simBusy=true; simLoop=!!loop;
@@ -1548,12 +1778,424 @@
       '<div class="glass b-card"><h4>⚡ Revival sequence</h4>'+seq+'</div>'+
       '<div class="glass b-card"><h4>✉️ Sample message (unlocked)</h4><div class="b-msg">'+esc(s.sample_message||'')+'</div></div>'+
       '<div class="glass b-card"><h4>💼 Your sell kit</h4><div class="b-kv">Suggested retainer: <b>'+esc(kit.suggested_retainer||'$500–$1,500/mo')+'</b></div><div class="b-kv" style="margin-top:6px">Pitch opener:</div><div class="b-msg" style="margin-top:6px">'+esc(kit.pitch_opener||'')+'</div></div>'+
-      '<div class="glass b-card b-locked"><div class="content"><h4>🔒 Full system</h4>'+locked+'</div><div class="b-lockover"><span class="lk">🔒</span><b style="font-family:var(--display)">Your system is built, activate it</b><span class="muted" style="color:var(--muted);font-size:13px">Subscribe to unlock the full copy, live scoring & client dashboard</span><button class="btn btn-primary" onclick="goCheckout(\'growth\')">Activate, from $149/mo →</button><a style="color:var(--signal);cursor:pointer;font-size:13px" onclick="openAuth(\'signup\')">or create your account first</a></div></div>'+
+      '<div class="glass b-card b-locked"><div class="content"><h4>🔒 Full system</h4>'+locked+'</div><div class="b-lockover"><span class="lk">🔒</span><b style="font-family:var(--display)">Your system is built, activate it</b><span class="muted" style="color:var(--muted);font-size:13px">Subscribe to unlock the full copy, live scoring & client dashboard</span><button class="btn btn-primary" onclick="goCheckout(\'growth\')">Activate, from $79/mo →</button><a style="color:var(--signal);cursor:pointer;font-size:13px" onclick="openAuth(\'signup\')">or create your account first</a></div></div>'+
       '</div>';
     document.getElementById('bResult').scrollIntoView({behavior:'smooth',block:'start'});
   }
 
   let tt;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2800)}
+
+  /* ══════════════════════════════════════════════════════════════════
+     System Board — an explorable canvas of the AI workforce.
+     Pan/zoom viewport, live particle flow, inspector, command palette,
+     and a copilot that answers from the graph itself.
+     ══════════════════════════════════════════════════════════════════ */
+  const OSB={view:{x:0,y:0,k:1},workers:[],edges:[],sel:null,explain:false,
+             running:false,spec:null,live:null,built:false};
+  const WORLD={w:1560,h:560};
+
+  /* Cluster frames: the org chart of the AI company. */
+  const OSB_CLUSTERS=[
+    {id:'intake',   name:'Intake',       x:30,  y:40, w:250, h:330},
+    {id:'intel',    name:'Intelligence', x:330, y:10, w:250, h:470},
+    {id:'outreach', name:'Outreach',     x:630, y:40, w:250, h:330},
+    {id:'gov',      name:'Governance',   x:930, y:10, w:250, h:470},
+    {id:'growth',   name:'Growth',       x:1230,y:10, w:250, h:470}
+  ];
+
+  function osbWorkerDefs(p,seq,chans){
+    const ind=p.industry||selType||'your industry';
+    return [
+      {id:'source',c:'intake',x:57,y:80,ico:'📥',name:'Intake Officer',
+       purpose:'Pulls the dead-lead list in from a CSV or a live CRM sync, cleans it, and de-duplicates it.',
+       act:'Imported and normalized the '+ind+' list',tools:['CSV parser','CRM sync'],
+       prompt:'Ingest the lead export. Normalize names, emails and phones. Flag rows missing contact details.'},
+      {id:'crm',c:'intake',x:57,y:218,ico:'🗂',name:'CRM Steward',
+       purpose:'Keeps your CRM and Revio in agreement — writes scores, tags and revival status back.',
+       act:'Synced statuses and tags both ways',tools:['HubSpot','Pipedrive','Sheets'],
+       prompt:'Mirror lead status, score and revival stage back into the CRM without overwriting human edits.'},
+      {id:'scoring',c:'intel',x:357,y:50,ico:'🎯',name:'Scoring Analyst',
+       purpose:'Gives every lead a 0–100 revival score. Deterministic, so the same lead always scores the same.',
+       act:'Scored the list, surfaced the winnable share',tools:['Decay model','Deal weighting'],
+       prompt:'Score each lead 0–100 on recency decay, deal value and prior engagement. Never guess — show the arithmetic.'},
+      {id:'diagnosis',c:'intel',x:357,y:190,ico:'🩺',name:'Diagnosis Agent',
+       purpose:'Works out WHY each lead went cold — price, timing, competitor, or simply no follow-up.',
+       act:'Diagnosed cause of death per lead',tools:['Note analysis','Objection model'],
+       prompt:'Read the lead history and classify why it went quiet. Cite the evidence you used.'},
+      {id:'timing',c:'intel',x:357,y:330,ico:'⏱',name:'Timing Analyst',
+       purpose:'Picks the moment to re-contact. Each cause of death has its own best window.',
+       act:'Scheduled every touch to its best window',tools:['Window model','Seasonality'],
+       prompt:'Given the cause of death and the industry season, choose the optimal re-contact window.'},
+      {id:'writer',c:'outreach',x:657,y:80,ico:'✍️',name:'Message Writer',
+       purpose:'Writes the actual revival message for each lead, in the owner\'s voice, referencing their real history.',
+       act:'Drafted personalized revival copy',tools:['LLM','Brand voice'],
+       prompt:'Write a short, human re-engagement message. Reference their specific situation. Never sound like a template.'},
+      {id:'sequence',c:'outreach',x:657,y:218,ico:'📨',name:'Sequence Manager',
+       purpose:'Arranges the messages into a multi-step cadence across '+(chans||'email')+'.',
+       act:(seq.length||5)+'-step sequence staged',tools:['Cadence engine'],
+       prompt:'Build a '+(seq.length||5)+'-step cadence. Escalate channel only after silence. Stop instantly on reply.'},
+      {id:'compliance',c:'gov',x:957,y:50,ico:'🛡',name:'Compliance Officer',
+       purpose:'Checks every recipient against the do-not-contact list before anything is sent, and honors every opt-out permanently.',
+       act:'Screened all recipients, opt-outs enforced',tools:['Suppression list','CAN-SPAM','TCPA'],
+       prompt:'Block any send to a suppressed address. On a stop request, suppress permanently and never reverse it.'},
+      {id:'approval',c:'gov',x:957,y:190,ico:'✅',name:'Approval Gate',
+       purpose:'Holds every message for a human yes. Nothing reaches a customer without the owner seeing it.',
+       act:'Queued messages for your approval',tools:['Review queue'],
+       prompt:'Present each drafted message for human approval. Never auto-release without explicit sign-off.'},
+      {id:'delivery',c:'gov',x:957,y:330,ico:'🚀',name:'Delivery Agent',
+       purpose:'Sends approved messages and tracks opens, clicks, bounces and complaints.',
+       act:'Delivered approved messages',tools:['SendGrid','Twilio'],
+       prompt:'Send approved messages at the scheduled time. Report bounces and complaints straight to Compliance.'},
+      {id:'response',c:'growth',x:1257,y:50,ico:'💬',name:'Response Analyst',
+       purpose:'Reads every reply, sorts intent, and escalates the hot ones to you immediately.',
+       act:'Classified replies, escalated hot leads',tools:['Intent model'],
+       prompt:'Classify each reply as interested, objection, not-now or opt-out. Route opt-outs to Compliance at once.'},
+      {id:'memory',c:'growth',x:1257,y:190,ico:'🧠',name:'Business Memory',
+       purpose:'Remembers what works in '+ind+' — winning angles, timing, objections — and feeds it back into scoring.',
+       act:'Learning what converts in '+ind,tools:['Vector memory','Outcome log'],
+       prompt:'Record every outcome. Surface the patterns that repeat. Feed winners back into scoring and copy.'},
+      {id:'reporter',c:'growth',x:1257,y:330,ico:'📊',name:'Revenue Reporter',
+       purpose:'Tracks recovered revenue and writes the morning brief so you know what happened while you slept.',
+       act:'Compiled the recovered-revenue ledger',tools:['Ledger','Daily brief'],
+       prompt:'Report revenue recovered, what moved, and the single highest-value action to take today.'}
+    ];
+  }
+  const OSB_EDGES=[['source','scoring'],['crm','scoring'],['scoring','diagnosis'],
+    ['diagnosis','timing'],['diagnosis','writer'],['timing','sequence'],['writer','sequence'],
+    ['sequence','compliance'],['compliance','approval'],['approval','delivery'],
+    ['delivery','response'],['response','memory'],['response','reporter'],['memory','scoring']];
+
+  function osbBuild(spec,live){
+    if(!spec){document.getElementById('osbEmpty').classList.add('show');return}
+    document.getElementById('osbEmpty').classList.remove('show');
+    OSB.spec=spec;OSB.live=live||null;
+    const p=spec.business_profile||{},seq=spec.revival_sequence||[];
+    const chans=[...new Set(seq.map(x=>x.channel))].join(' + ')||'email';
+    const L=live||{},isLive=!!live;
+    const leads=isLive?(L.total_leads||0):(p.estimated_dead_leads||1500);
+    const val=isLive?(L.revenue_at_risk||0):(spec.projected_recoverable_usd||0);
+    OSB.workers=osbWorkerDefs(p,seq,chans).map((w,i)=>{
+      const cl=OSB_CLUSTERS.find(c=>c.id===w.c);
+      return Object.assign({},w,{
+        status:isLive?'done':'idle',
+        conf:[92,88,90,86,84,91,89,99,97,93,87,85,94][i]||90,
+        tokens:isLive?Math.round(leads*(0.6+i*0.12)):0,
+        value:Math.round(val*[0.05,0.03,0.16,0.14,0.07,0.13,0.09,0.02,0.02,0.08,0.11,0.06,0.04][i]),
+        leads:leads, cluster:cl
+      });
+    });
+    OSB.edges=OSB_EDGES.slice();
+    OSB.built=true;
+    osbDraw();osbHealth();osbFit();
+    document.getElementById('osbTitle').textContent=(p.industry||selType)+' · '+(p.goal||selGoal);
+    document.getElementById('osbSub').textContent=isLive?'live · 13 workers':'assembled · 13 workers';
+  }
+
+  function osbDraw(){
+    const host=document.getElementById('osbNodes'),svg=document.getElementById('osbEdges');
+    if(!host||!svg)return;
+    host.innerHTML=OSB_CLUSTERS.map(c=>
+      '<div class="cl" style="left:'+c.x+'px;top:'+c.y+'px;width:'+c.w+'px;height:'+c.h+'px">'+
+      '<span class="cl-t">'+c.name+'</span></div>').join('')+
+      OSB.workers.map(w=>osbNodeHTML(w)).join('');
+    // edges + travelling data packets
+    let d='';
+    OSB.edges.forEach((e,i)=>{
+      const a=OSB.workers.find(w=>w.id===e[0]),b=OSB.workers.find(w=>w.id===e[1]);
+      if(!a||!b)return;
+      const NW=196,NH=118;
+      const x1=a.x+NW,y1=a.y+NH/2,x2=b.x,y2=b.y+NH/2;
+      const mx=(x1+x2)/2;
+      const path='M'+x1+' '+y1+' C'+mx+' '+y1+','+mx+' '+y2+','+x2+' '+y2;
+      d+='<path id="ep'+i+'" d="'+path+'" fill="none" stroke="rgba(45,212,191,.22)" stroke-width="1.5"/>';
+      d+='<circle r="2.6" fill="#2DD4BF" opacity=".9"><animateMotion dur="'+(2.6+i%3*.5)+'s" repeatCount="indefinite" begin="'+(i*.22)+'s"><mpath href="#ep'+i+'"/></animateMotion></circle>';
+    });
+    svg.innerHTML=d;
+    osbApply();osbMap();
+  }
+  function osbNodeHTML(w){
+    return '<div class="wk s-'+w.status+'" id="wk-'+w.id+'" data-id="'+w.id+'" '+
+      'style="left:'+w.x+'px;top:'+w.y+'px" onclick="osbInspect(\''+w.id+'\')">'+
+      '<div class="wk-h"><div class="wk-i">'+w.ico+'</div><div class="wk-n">'+esc(w.name)+'</div><span class="wk-dot"></span></div>'+
+      '<div class="wk-act">'+esc(w.act)+'</div>'+
+      '<div class="wk-m"><div><b>'+w.conf+'%</b><span>confidence</span></div>'+
+      '<div><b>'+(w.value?fmtUSD(w.value):'—')+'</b><span>value</span></div>'+
+      '<div><b>'+(w.tokens?(w.tokens>999?(w.tokens/1000).toFixed(1)+'k':w.tokens):'—')+'</b><span>tokens</span></div></div></div>';
+  }
+
+  /* ---- viewport ---- */
+  function osbApply(){
+    const w=document.getElementById('osbWorld');if(!w)return;
+    w.style.transform='translate('+OSB.view.x+'px,'+OSB.view.y+'px) scale('+OSB.view.k+')';
+    const z=document.getElementById('osbZoomLbl');if(z)z.textContent=Math.round(OSB.view.k*100)+'%';
+    osbMapView();
+  }
+  function osbZoom(f,cx,cy){
+    const st=document.getElementById('osbStage');if(!st)return;
+    const r=st.getBoundingClientRect();
+    cx=cx==null?r.width/2:cx; cy=cy==null?r.height/2:cy;
+    const k0=OSB.view.k, k=Math.min(2.2,Math.max(.28,k0*f));
+    OSB.view.x=cx-(cx-OSB.view.x)*(k/k0);
+    OSB.view.y=cy-(cy-OSB.view.y)*(k/k0);
+    OSB.view.k=k;osbApply();
+  }
+  function osbFit(){
+    const st=document.getElementById('osbStage');if(!st)return;
+    const r=st.getBoundingClientRect();if(!r.width)return;
+    const k=Math.min((r.width-48)/WORLD.w,(r.height-48)/WORLD.h,1.1);
+    OSB.view.k=Math.max(.28,k);
+    OSB.view.x=(r.width-WORLD.w*OSB.view.k)/2;
+    OSB.view.y=(r.height-WORLD.h*OSB.view.k)/2;
+    osbApply();
+  }
+  function osbPanTo(id,zoom){
+    const w=OSB.workers.find(x=>x.id===id);if(!w)return;
+    const st=document.getElementById('osbStage'),r=st.getBoundingClientRect();
+    const k=zoom||Math.max(OSB.view.k,.85);OSB.view.k=k;
+    OSB.view.x=r.width/2-(w.x+98)*k;
+    OSB.view.y=r.height/2-(w.y+59)*k;
+    osbApply();
+    const el=document.getElementById('wk-'+id);
+    if(el){document.querySelectorAll('.wk').forEach(n=>n.classList.remove('sel'));el.classList.add('sel');}
+  }
+  /* ---- minimap ---- */
+  function osbMap(){
+    const m=document.getElementById('osbMap');if(!m)return;
+    m.querySelectorAll('i').forEach(n=>n.remove());
+    const sx=158/WORLD.w, sy=96/WORLD.h;
+    OSB.workers.forEach(w=>{
+      const i=document.createElement('i');
+      i.style.cssText='left:'+(w.x*sx)+'px;top:'+(w.y*sy)+'px;width:'+(196*sx)+'px;height:'+(118*sy)+'px';
+      m.appendChild(i);
+    });
+  }
+  function osbMapView(){
+    const st=document.getElementById('osbStage'),v=document.getElementById('osbMapView');
+    if(!st||!v)return;const r=st.getBoundingClientRect();if(!r.width)return;
+    const sx=158/WORLD.w, sy=96/WORLD.h, k=OSB.view.k;
+    v.style.cssText='left:'+(-OSB.view.x/k*sx)+'px;top:'+(-OSB.view.y/k*sy)+'px;'+
+      'width:'+(r.width/k*sx)+'px;height:'+(r.height/k*sy)+'px';
+  }
+  /* ---- health ---- */
+  function osbHealth(){
+    const el=document.getElementById('osbHealth');if(!el)return;
+    const L=OSB.live||{},isLive=!!OSB.live;
+    const val=OSB.workers.reduce((s,w)=>s+(w.value||0),0);
+    const conf=Math.round(OSB.workers.reduce((s,w)=>s+w.conf,0)/(OSB.workers.length||1));
+    const h=[['Health',isLive&&L.health!=null?Math.round(L.health)+'/100':'—'],
+             ['Workers',OSB.workers.length],['Automation','92%'],
+             ['Confidence',conf+'%'],['Revenue impact',fmtUSD(val)]];
+    el.innerHTML=h.map(x=>'<div class="h"><b>'+x[1]+'</b><span>'+x[0]+'</span></div>').join('');
+  }
+
+  /* ---- inspector ---- */
+  function osbInspect(id){
+    const w=OSB.workers.find(x=>x.id===id);if(!w)return;
+    OSB.sel=id;
+    document.querySelectorAll('.wk').forEach(n=>n.classList.toggle('sel',n.dataset.id===id));
+    const ins=document.getElementById('osbInspect');
+    const ups=OSB.edges.filter(e=>e[1]===id).map(e=>e[0]),downs=OSB.edges.filter(e=>e[0]===id).map(e=>e[1]);
+    const nm=x=>{const f=OSB.workers.find(w2=>w2.id===x);return f?f.name:x};
+    ins.innerHTML=
+      '<h4><span class="wk-i" style="width:26px;height:26px;font-size:13px">'+w.ico+'</span>'+esc(w.name)+
+      '<button class="osb-x" onclick="osbCloseInspect()">✕</button></h4>'+
+      '<div class="osb-sect" style="border:none;padding-top:10px"><div class="lb">Purpose</div><p>'+esc(w.purpose)+'</p></div>'+
+      '<div class="osb-sect"><div class="lb">Current state</div>'+
+        '<div class="osb-kv"><div><b>'+(w.status==='done'?'Complete':w.status==='run'?'Running':'Waiting')+'</b><span>status</span></div>'+
+        '<div><b>'+w.conf+'%</b><span>confidence</span></div>'+
+        '<div><b>'+(w.value?fmtUSD(w.value):'—')+'</b><span>value attributed</span></div>'+
+        '<div><b>'+(w.tokens?w.tokens.toLocaleString():'—')+'</b><span>tokens used</span></div></div></div>'+
+      '<div class="osb-sect"><div class="lb">Last action</div><p>'+esc(w.act)+'</p></div>'+
+      '<div class="osb-sect"><div class="lb">Instructions (editable)</div>'+
+        '<textarea class="osb-prompt" id="osbPromptBox">'+esc(w.prompt)+'</textarea>'+
+        '<button class="osb-btn" style="margin-top:8px" onclick="osbSavePrompt(\''+w.id+'\')">Save instructions</button></div>'+
+      '<div class="osb-sect"><div class="lb">Tools</div>'+w.tools.map(t=>'<span class="osb-tag">'+esc(t)+'</span>').join('')+'</div>'+
+      '<div class="osb-sect"><div class="lb">Receives from</div><p>'+(ups.length?ups.map(nm).map(esc).join(', '):'Nothing — this is an entry point.')+'</p></div>'+
+      '<div class="osb-sect"><div class="lb">Hands off to</div><p>'+(downs.length?downs.map(nm).map(esc).join(', '):'Nothing — this is an endpoint.')+'</p></div>';
+    ins.classList.add('open');
+  }
+  function osbCloseInspect(){document.getElementById('osbInspect').classList.remove('open');
+    document.querySelectorAll('.wk').forEach(n=>n.classList.remove('sel'));OSB.sel=null}
+  function osbSavePrompt(id){
+    const w=OSB.workers.find(x=>x.id===id),box=document.getElementById('osbPromptBox');
+    if(w&&box){w.prompt=box.value;toast('Instructions saved for '+w.name)}
+  }
+
+  /* ---- explain mode ---- */
+  function osbToggleExplain(){
+    OSB.explain=!OSB.explain;
+    document.getElementById('osbExplainBtn').classList.toggle('on',OSB.explain);
+    document.getElementById('osbStage').classList.toggle('explain',OSB.explain);
+    if(!OSB.explain)osbTip(null);
+    toast(OSB.explain?'Explain mode on, hover any worker':'Explain mode off');
+  }
+  function osbTip(w,ev){
+    let t=document.getElementById('osbTip');
+    if(!t){t=document.createElement('div');t.id='osbTip';t.className='osb-tip';document.body.appendChild(t)}
+    if(!w){t.classList.remove('show');return}
+    const ups=OSB.edges.filter(e=>e[1]===w.id).length;
+    t.innerHTML='<b>'+esc(w.name)+'</b>'+esc(w.purpose)+
+      '<div style="margin-top:7px;color:var(--dim);font-size:11px">Business value '+(w.value?fmtUSD(w.value):'indirect')+
+      ' · depends on '+ups+' worker'+(ups===1?'':'s')+' · confidence '+w.conf+'%</div>';
+    t.style.left=Math.min(window.innerWidth-300,ev.clientX+16)+'px';
+    t.style.top=Math.min(window.innerHeight-150,ev.clientY+16)+'px';
+    t.classList.add('show');
+  }
+
+  /* ---- run simulation: propagate through the graph ---- */
+  function osbRun(){
+    if(OSB.running||!OSB.workers.length)return;OSB.running=true;
+    const order=['source','crm','scoring','diagnosis','timing','writer','sequence',
+                 'compliance','approval','delivery','response','memory','reporter'];
+    OSB.workers.forEach(w=>{w.status='idle'});
+    document.querySelectorAll('.wk').forEach(n=>n.className='wk s-idle');
+    const btn=document.getElementById('osbRunBtn');if(btn)btn.textContent='● Running';
+    let i=0;
+    (function step(){
+      if(i>0){const prev=OSB.workers.find(w=>w.id===order[i-1]);if(prev){prev.status='done';
+        const e=document.getElementById('wk-'+prev.id);if(e)e.className='wk s-done'}}
+      if(i>=order.length){OSB.running=false;if(btn)btn.textContent='▶ Run';
+        toast('Run complete, all 13 workers reported in');return}
+      const w=OSB.workers.find(x=>x.id===order[i]);
+      if(w){w.status='run';const e=document.getElementById('wk-'+w.id);if(e)e.className='wk s-run'}
+      i++;setTimeout(step,460);
+    })();
+  }
+
+  /* ---- command palette ---- */
+  function osbPalette(open){
+    let p=document.getElementById('osbPal');
+    if(!p){
+      p=document.createElement('div');p.id='osbPal';p.className='osb-pal';
+      p.innerHTML='<div class="box"><input id="osbPalIn" placeholder="Search workers or run a command…"/><div class="res" id="osbPalRes"></div></div>';
+      document.body.appendChild(p);
+      p.addEventListener('click',e=>{if(e.target===p)osbPalette(false)});
+      p.querySelector('#osbPalIn').addEventListener('input',e=>osbPalRender(e.target.value));
+    }
+    p.classList.toggle('open',!!open);
+    if(open){const inp=document.getElementById('osbPalIn');inp.value='';osbPalRender('');setTimeout(()=>inp.focus(),40)}
+  }
+  function osbPalRender(q){
+    q=(q||'').toLowerCase();
+    const cmds=[
+      {t:'Run the full system',k:'run',fn:'osbRun()'},
+      {t:'Fit to screen',k:'view',fn:'osbFit()'},
+      {t:'Toggle explain mode',k:'view',fn:'osbToggleExplain()'},
+      {t:'Ask the system a question',k:'ai',fn:'osbCopilotOpen(true)'},
+      {t:'Upload leads',k:'action',fn:'runScan()'},
+      {t:'Run AI scan',k:'action',fn:'runPipeline()'}
+    ].filter(c=>!q||c.t.toLowerCase().includes(q));
+    const wk=OSB.workers.filter(w=>!q||w.name.toLowerCase().includes(q)||w.purpose.toLowerCase().includes(q));
+    const res=document.getElementById('osbPalRes');
+    res.innerHTML=
+      (wk.length?'<div style="font-family:var(--mono);font-size:9.5px;color:var(--dim);padding:6px 12px;letter-spacing:1px">WORKERS</div>':'')+
+      wk.map(w=>'<div class="r" onclick="osbPalGo(\''+w.id+'\')"><span>'+w.ico+'</span>'+esc(w.name)+'<span class="k">jump</span></div>').join('')+
+      (cmds.length?'<div style="font-family:var(--mono);font-size:9.5px;color:var(--dim);padding:6px 12px;letter-spacing:1px">COMMANDS</div>':'')+
+      cmds.map(c=>'<div class="r" onclick="osbPalette(false);'+c.fn+'"><span>›</span>'+c.t+'<span class="k">'+c.k+'</span></div>').join('')+
+      (!wk.length&&!cmds.length?'<div style="padding:18px;text-align:center;color:var(--dim);font-size:12.5px">Nothing matches that.</div>':'');
+  }
+  function osbPalGo(id){osbPalette(false);osbPanTo(id);osbInspect(id)}
+
+  /* ---- copilot: answers from the graph, no LLM required ---- */
+  function osbCopilotOpen(open){
+    document.getElementById('osbCopilot').classList.toggle('open',!!open);
+    document.getElementById('osbCpOpen').style.display=open?'none':'block';
+    const log=document.getElementById('osbCpLog');
+    if(open&&!log.children.length){
+      osbSay('a','I can see all <b>'+OSB.workers.length+'</b> workers, how they connect, and what each one is doing. Ask me about any of them.');
+      document.getElementById('osbCpChips').innerHTML=
+        ['What does the Compliance Officer do?','Where is the money made?','Find bottlenecks','What should I automate next?']
+        .map(q=>'<button class="osb-chip" onclick="osbAskText(\''+q.replace(/'/g,"\\'")+'\')">'+q+'</button>').join('');
+    }
+  }
+  function osbSay(who,html){
+    const log=document.getElementById('osbCpLog');
+    const d=document.createElement('div');d.className='osb-msg '+who;d.innerHTML=html;
+    log.appendChild(d);log.scrollTop=log.scrollHeight;
+  }
+  function osbAsk(e){e.preventDefault();const i=document.getElementById('osbCpInput');
+    const q=i.value.trim();if(!q)return;i.value='';osbAskText(q)}
+  function osbAskText(q){
+    osbSay('u',esc(q));
+    setTimeout(()=>osbSay('a',osbAnswer(q)),260);
+  }
+  function osbAnswer(q){
+    const s=q.toLowerCase();
+    // direct worker match -> pan the camera there
+    const hit=OSB.workers.find(w=>s.includes(w.name.toLowerCase())||s.includes(w.id));
+    if(hit){
+      osbPanTo(hit.id);osbInspect(hit.id);
+      const ups=OSB.edges.filter(e=>e[1]===hit.id).map(e=>e[0]);
+      const downs=OSB.edges.filter(e=>e[0]===hit.id).map(e=>e[1]);
+      const nm=x=>{const f=OSB.workers.find(w=>w.id===x);return f?f.name:x};
+      return '<b>'+esc(hit.name)+'</b><br>'+esc(hit.purpose)+
+        '<br><br>It takes work from <b>'+(ups.map(nm).join(', ')||'the outside world')+
+        '</b> and hands off to <b>'+(downs.map(nm).join(', ')||'nobody, it is the last step')+
+        '</b>. Confidence '+hit.conf+'%. I have moved the board to it.';
+    }
+    if(/money|revenue|value|profit|earn/.test(s)){
+      const top=OSB.workers.slice().sort((a,b)=>b.value-a.value).slice(0,3);
+      osbPanTo(top[0].id);
+      return 'Most of the value concentrates early: <b>'+top.map(w=>esc(w.name)+' ('+fmtUSD(w.value)+')').join('</b>, <b>')+
+        '</b>. Scoring and diagnosis matter most because they decide <em>who</em> gets contacted, and that decision drives everything downstream.';
+    }
+    if(/bottleneck|slow|stuck|problem|issue/.test(s)){
+      return 'The real bottleneck is the <b>Approval Gate</b> — every message waits on a human yes. That is deliberate and it keeps you safe, but at high volume it is where things queue up. Bulk approve is the fix, not removing the gate.';
+    }
+    if(/automate|next|improve|optimi/.test(s)){
+      return 'Automate <b>reply triage</b> next. The Response Analyst already classifies intent, so routing hot replies straight to your calendar removes the slowest human step. Keep the Approval Gate manual until you trust the copy.';
+    }
+    if(/compliance|legal|spam|opt.?out|unsubscribe|suppress/.test(s)){
+      osbPanTo('compliance');osbInspect('compliance');
+      return '<b>Compliance Officer</b> is the one worker that can veto every other. It checks each recipient against the do-not-contact list before a send, and any reply saying stop or unsubscribe is suppressed permanently. Opt-outs are never reversed, by design.';
+    }
+    if(/how many|workers|team|who/.test(s)){
+      return 'You have <b>'+OSB.workers.length+' workers</b> across '+OSB_CLUSTERS.length+
+        ' teams: '+OSB_CLUSTERS.map(c=>esc(c.name)).join(', ')+
+        '. Work flows left to right, and Business Memory loops what it learns back into Scoring.';
+    }
+    return 'I can explain any worker, trace where value is created, find bottlenecks, or tell you what to automate next. Try naming one, for example <b>Diagnosis Agent</b> or <b>Compliance Officer</b>.';
+  }
+
+  /* ---- interactions: pan, zoom, keyboard ---- */
+  (function osbBind(){
+    const st=document.getElementById('osbStage');if(!st)return;
+    let drag=false,sx=0,sy=0,ox=0,oy=0;
+    st.addEventListener('mousedown',e=>{
+      if(e.target.closest('.wk')||e.target.closest('.osb-inspect')||e.target.closest('.osb-copilot')||e.target.closest('.osb-map'))return;
+      drag=true;sx=e.clientX;sy=e.clientY;ox=OSB.view.x;oy=OSB.view.y;st.classList.add('grabbing');
+    });
+    window.addEventListener('mousemove',e=>{
+      if(drag){OSB.view.x=ox+(e.clientX-sx);OSB.view.y=oy+(e.clientY-sy);osbApply();return}
+      if(OSB.explain){const n=e.target.closest&&e.target.closest('.wk');
+        const w=n?OSB.workers.find(x=>x.id===n.dataset.id):null;osbTip(w,e);}
+    });
+    window.addEventListener('mouseup',()=>{drag=false;st.classList.remove('grabbing')});
+    st.addEventListener('wheel',e=>{
+      e.preventDefault();const r=st.getBoundingClientRect();
+      osbZoom(e.deltaY<0?1.11:0.9,e.clientX-r.left,e.clientY-r.top);
+    },{passive:false});
+    st.addEventListener('dblclick',e=>{const n=e.target.closest('.wk');
+      if(n)osbPanTo(n.dataset.id,1.25);else osbFit()});
+    document.getElementById('osbMap').addEventListener('click',e=>{
+      const r=e.currentTarget.getBoundingClientRect();
+      const wx=(e.clientX-r.left)/158*WORLD.w, wy=(e.clientY-r.top)/96*WORLD.h;
+      const sr=st.getBoundingClientRect();
+      OSB.view.x=sr.width/2-wx*OSB.view.k;OSB.view.y=sr.height/2-wy*OSB.view.k;osbApply();
+    });
+    document.addEventListener('keydown',e=>{
+      const typing=/input|textarea/i.test((e.target.tagName||''));
+      if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();osbPalette(true);return}
+      if(e.key==='Escape'){osbPalette(false);osbCloseInspect();osbTip(null);return}
+      if(typing)return;
+      const boardOpen=document.querySelector('.panel[data-panel="board"].active');
+      if(!boardOpen)return;
+      if(e.key==='f')osbFit();
+      if(e.key==='e')osbToggleExplain();
+      if(e.key==='r')osbRun();
+    });
+    window.addEventListener('resize',()=>{osbMapView()});
+  })();
 
   /* ── First-party visit counter (no cookies, no third parties) ── */
   (function(){
