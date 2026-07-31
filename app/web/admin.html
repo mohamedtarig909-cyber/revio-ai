@@ -193,6 +193,7 @@ a{color:var(--teal)}
 
     <!-- OVERVIEW -->
     <section class="panel on" data-panel="overview">
+      <div class="card" id="aiCard" style="margin-bottom:14px"></div>
       <div class="today" id="today"></div>
       <div class="kpis" id="kpis"></div>
       <div class="card">
@@ -368,7 +369,7 @@ async function loadAll(manual){
     USERS=(await uR.json().catch(()=>({users:[]}))).users||[];
     const od=await oR.json().catch(()=>({}));
     ORGS=od.orgs||od.organizations||[];
-    renderToday();renderKpis();renderChart();renderFunnel();renderRecent();renderDemand();renderUsers();renderTraffic();renderSystems();renderOrgs();
+    renderAI();renderToday();renderKpis();renderChart();renderFunnel();renderRecent();renderDemand();renderUsers();renderTraffic();renderSystems();renderOrgs();
     if(manual)toast('Updated');
   }catch(e){toast('Could not load data')}
 }
@@ -387,6 +388,34 @@ function card(k,v,note,cls,delta){
   }
   return '<div class="kpi '+cls+'"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(d||'<div class="n">'+note+'</div>')+'</div>';
 }
+
+async function renderAI(){
+  const el=document.getElementById('aiCard');if(!el)return;
+  el.innerHTML='<h3>AI connection</h3><div class="cs">Checking…</div>';
+  try{
+    const r=await fetch(API+'/api/v1/admin/ai-status',{headers:h()});
+    const d=await r.json();
+    const ok=!!d.connected;
+    const dot=ok?'var(--green)':(d.key_configured?'var(--rose)':'var(--dim)');
+    const state=ok?'Live':(d.key_configured?'Key set, call failing':'Not connected');
+    el.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+      '<span style="width:9px;height:9px;border-radius:50%;background:'+dot+'"></span>'+
+      '<h3 style="margin:0">AI connection</h3>'+
+      '<span class="pill '+(ok?'active':'off')+'">'+esc(state)+'</span>'+
+      (ok&&d.latency_ms!=null?'<span class="mono" style="color:var(--dim)">'+d.latency_ms+'ms</span>':'')+
+      '<button class="btn ghost sm" style="margin-left:auto" onclick="renderAI()">Re-check</button></div>'+
+      '<div class="cs" style="margin:9px 0 0">'+esc(d.detail||'')+'</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-top:12px">'+
+        kv('Model',d.model_small||'—')+kv('Endpoint',(d.base_url||'').replace(/^https?:\/\//,''))+
+        kv('Key',d.key_hint||'missing')+
+      '</div>'+
+      (d.error?'<div style="margin-top:10px;padding:10px 12px;border-radius:9px;background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.3);color:#FCA5A5;font-size:12px;font-family:var(--mono);word-break:break-word">'+esc(d.error)+'</div>':'')+
+      (!d.key_configured?'<div class="cs" style="margin-top:10px">Set <span class="mono">OPENAI_API_KEY</span>, <span class="mono">OPENAI_BASE_URL</span>, <span class="mono">LLM_MODEL</span> and <span class="mono">LLM_MODEL_SMALL</span> in your Space secrets, then re-check.</div>':'');
+  }catch(e){el.innerHTML='<h3>AI connection</h3><div class="cs">Could not reach the server.</div>'}
+}
+function kv(k,v){return '<div style="background:var(--sunk,rgba(255,255,255,.03));border:1px solid var(--bd);border-radius:10px;padding:9px 11px">'+
+  '<div style="font-size:9.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px">'+k+'</div>'+
+  '<div class="mono" style="color:var(--tx);font-size:12px;margin-top:2px;word-break:break-all">'+esc(v)+'</div></div>'}
 
 function renderToday(){
   const t=DATA.today||{};

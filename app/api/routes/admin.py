@@ -487,3 +487,47 @@ def remove_suppression(sup_id: UUID, _: None = Depends(require_admin)):
         db.delete(row)
         db.commit()
     return {"removed": True}
+
+
+# ---------------------------------------------------------------------------
+# AI connection
+# ---------------------------------------------------------------------------
+
+@router.get("/ai-status")
+def ai_status(_: None = Depends(require_admin)):
+    """Is the AI actually connected? Makes one tiny real call to prove it.
+
+    Never returns the key itself — only whether one is present, where it points,
+    and whether a live round-trip succeeds.
+    """
+    import time
+    key = settings.openai_api_key or ""
+    out = {
+        "key_configured": bool(key),
+        "key_hint": (key[:6] + "…" + key[-4:]) if len(key) > 12 else ("set" if key else "missing"),
+        "base_url": settings.openai_base_url,
+        "model": settings.llm_model,
+        "model_small": settings.llm_model_small,
+        "provider": settings.llm_provider,
+    }
+    if not key:
+        out.update(connected=False,
+                   detail="No API key set. Revio is running on deterministic templates.")
+        return out
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=key, base_url=settings.openai_base_url, timeout=20.0)
+        t0 = time.monotonic()
+        r = client.chat.completions.create(
+            model=settings.llm_model_small,
+            messages=[{"role": "user", "content": "Reply with the single word: ready"}],
+            max_tokens=5, temperature=0,
+        )
+        out.update(connected=True,
+                   latency_ms=round((time.monotonic() - t0) * 1000),
+                   reply=(r.choices[0].message.content or "").strip()[:40],
+                   detail="AI is live. Builder and agents are using real inference.")
+    except Exception as exc:                              # noqa: BLE001
+        out.update(connected=False, error=str(exc)[:300],
+                   detail="Key is set but the call failed. Check the model name and base URL.")
+    return out
