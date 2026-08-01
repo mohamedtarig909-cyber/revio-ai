@@ -620,6 +620,50 @@
   .osb-pal .r .k{font-family:var(--mono);font-size:10px;color:var(--dim);margin-left:auto}
 
   /* ---- board paywall ---- */
+  /* ── Recovered-revenue ledger: the reason they renew ── */
+  .ledger{margin:18px 0 12px;border-radius:20px;padding:22px 26px;position:relative;overflow:hidden;
+    background:linear-gradient(150deg,rgba(45,212,191,.13),rgba(52,211,153,.05) 46%,rgba(255,255,255,.02));
+    border:1px solid rgba(45,212,191,.24);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 10px 34px rgba(0,0,0,.32)}
+  .ledger .lg-top{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .ledger .lg-k{font-family:var(--mono);font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;
+    color:var(--signal)}
+  .ledger .lg-since{font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:auto}
+  .ledger .lg-v{font-family:var(--display);font-weight:600;font-size:clamp(34px,6vw,52px);
+    letter-spacing:-2px;line-height:1.02;color:var(--text);margin:6px 0 2px;
+    font-variant-numeric:tabular-nums}
+  .ledger .lg-sub{color:var(--muted);font-size:13.5px}
+  .ledger .lg-sub b{color:var(--text)}
+  .ledger .lg-bars{display:flex;align-items:flex-end;gap:4px;height:44px;margin-top:16px}
+  .ledger .lg-bars i{flex:1;background:linear-gradient(180deg,var(--signal),rgba(45,212,191,.28));
+    border-radius:3px 3px 0 0;min-height:3px;opacity:.85}
+  .ledger .lg-foot{display:flex;gap:22px;margin-top:14px;padding-top:13px;
+    border-top:1px solid rgba(255,255,255,.08);flex-wrap:wrap;font-family:var(--mono)}
+  .ledger .lg-foot div b{display:block;font-family:var(--display);font-size:17px;color:var(--text);
+    font-weight:600;font-variant-numeric:tabular-nums}
+  .ledger .lg-foot div span{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.7px}
+
+  /* ── Pipeline watch: the work that never finishes ── */
+  .watch{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-bottom:14px}
+  .wtile{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .wtile.warn{border-color:rgba(251,191,36,.32);background:rgba(251,191,36,.06)}
+  .wtile.crit{border-color:rgba(251,113,133,.34);background:rgba(251,113,133,.06)}
+  .wtile .wk{font-family:var(--mono);font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--dim)}
+  .wtile .wv{font-family:var(--display);font-size:25px;font-weight:600;margin-top:4px;letter-spacing:-.6px;
+    font-variant-numeric:tabular-nums}
+  .wtile.warn .wv{color:var(--gold)} .wtile.crit .wv{color:var(--rose)}
+  .wtile .ws{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .wlist{margin-top:4px}
+  .wrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .wrow:last-child{border-bottom:none}
+  .wrow .dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--gold)}
+  .wrow.crit .dot{background:var(--rose)}
+  .wrow .who{flex:1;min-width:0}
+  .wrow .who b{display:block;font-size:13.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wrow .who span{font-size:11.5px;color:var(--dim)}
+  .wrow .amt{font-family:var(--mono);font-size:13px;color:var(--text);white-space:nowrap}
+  .wrow .age{font-family:var(--mono);font-size:11px;color:var(--dim);white-space:nowrap;min-width:64px;text-align:right}
+
   .osb-lock{position:absolute;inset:0;z-index:11;display:none;place-items:center;padding:24px;
     background:radial-gradient(ellipse at center,rgba(7,9,8,.72),rgba(7,9,8,.94));
     backdrop-filter:blur(4px);animation:fade .4s ease}
@@ -804,7 +848,7 @@
   <div class="bh">
     <div style="text-align:center"><div class="pill"><i></i>LIVE AI SYSTEM BUILDER</div></div>
     <h1 class="bh-title">Build your client's AI revenue system.<br><span class="serif-accent">Right now. Right here.</span></h1>
-    <p class="bh-sub">Revio AI is an AI lead-reactivation platform. Pick a business, pick a goal, hit generate, and watch the system get built.</p>
+    <p class="bh-sub">Revio AI makes sure no lead ever goes cold unnoticed. It revives the ones already sitting in your CRM, then keeps watching every new one. Pick a business, pick your goals, watch the system build itself.</p>
 
     <div class="glass" style="padding:26px;border-radius:22px">
       <div class="chip-label">1 · Business type</div>
@@ -1080,6 +1124,9 @@
             <button class="btn btn-primary" onclick="runPipeline()">▶ Run AI scan</button>
           </div>
         </div>
+        <!-- The renewal argument, made visible every time they open the app -->
+        <div class="ledger" id="ledgerHero"></div>
+        <div class="watch" id="watchStrip"></div>
         <div class="cards4">
           <div class="kpi glass"><div class="k">Pipeline health</div><div class="v t" id="kScore">—</div><div class="s">0–100</div></div>
           <div class="kpi glass"><div class="k">Recoverable pipeline</div><div class="v g" id="kRecover">—</div><div class="s">dead-lead pool</div></div>
@@ -1103,8 +1150,7 @@
       <div class="panel" data-panel="why"><h2>Why-it-died</h2><div class="empty glass" style="margin-top:20px">Aggregate cause-of-death analysis lands here after your first scan.</div></div>
       <div class="panel" data-panel="sequences"><h2>Revival sequences</h2><div class="empty glass" style="margin-top:20px">Approve and edit AI-drafted re-engagement sequences. Sending stays off until opt-out/suppression is live.</div></div>
       <div class="panel" data-panel="outreach"><h2>Multi-channel outreach</h2><div class="empty glass" style="margin-top:20px">Email, SMS and WhatsApp delivery. Requires a sending provider + compliance setup before going live.</div></div>
-      <div class="panel" data-panel="decay"><h2>Lead decay radar</h2><div class="empty glass" style="margin-top:20px">Active leads cooling off surface here so you intervene before they die.</div></div>
-      <div class="panel" data-panel="winback"><h2>Win-back engine</h2><div class="empty glass" style="margin-top:20px">Past customers with repurchase signals, matched to your best-converting cohort.</div></div>
+      <div class="panel" data-panel="decay"><h2>Lead decay radar</h2><p style="color:var(--dim);font-family:var(--mono);font-size:13px">Conversations drifting right now. Catching a lead at day 14 costs far less than reviving it at day 90.</p><div class="glass" style="margin-top:16px;padding:18px 20px;border-radius:16px"><div class="wlist" id="watchList"><div class="empty" style="color:var(--dim);padding:20px 0;text-align:center">Nothing drifting yet.</div></div></div></div><div class="panel" data-panel="winback"><h2>Win-back engine</h2><div class="empty glass" style="margin-top:20px">Past customers with repurchase signals, matched to your best-converting cohort.</div></div>
       <div class="panel" data-panel="revenue"><h2>Recovered revenue &amp; daily report</h2><div class="empty glass" id="revenuePanel" style="margin-top:20px">Your daily AI executive report and recovered-revenue ledger appear here after the first scan.</div></div>
       <div class="panel" data-panel="board">
         <div class="osb" id="osb">
@@ -1381,7 +1427,7 @@
   function launchApp(){previewMode=false;stopPreviewSim();try{pvRestore()}catch(e){};site.style.display='none';app.style.display='block';scrollTo(0,0);
     const sc=document.getElementById('sideCard');
     if(sc&&currentUser){sc.style.display='block';sc.innerHTML='<b style="font-family:var(--display);font-size:12.5px;color:var(--text)">'+(currentUser.company||'Your workspace')+'</b><p style="color:var(--dim);margin:5px 0 0;font-size:11.5px">Plan: '+(currentUser.subscription_status||'trial')+'</p>';}
-    loadDashboard()}
+    loadDashboard();loadLedger()}
   function backToSite(){app.style.display='none';site.style.display='block';stopBoardAutoRefresh();stopPreviewSim()}
 
   /* ── System board: live auto-refresh (polls the workspace while the board is open) ── */
@@ -1426,6 +1472,7 @@
       const stt=document.getElementById('boardStatus');
       if(stt)stt.innerHTML='<span class="livedot"></span>Live · '+(ov.total_leads||0).toLocaleString()+' leads · health '+(ov.pipeline_health_score!=null?Math.round(ov.pipeline_health_score):'—')+'/100';
       try{OSB.live=ov;osbHealth();}catch(e){}
+      loadLedger();
       boardLastFetch=Date.now(); updateBoardAgo();
     }catch(e){}
   }
@@ -1997,6 +2044,77 @@
   }
 
   let tt;function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2800)}
+
+  /* ── Recovered-revenue ledger + pipeline watch ──────────────────────
+     A dead-lead sweep is finite: the big win lands in month one and the pile
+     is empty by month two. Customers churn because they stop SEEING value,
+     not because it stopped arriving. These two views keep the cumulative win
+     in front of them and reframe the product as work that never finishes. */
+  async function loadLedger(){
+    if(previewMode||!AUTH_TOKEN)return;
+    try{
+      const headers=await authHeaders();
+      const [lr,wr]=await Promise.all([
+        fetch(API_BASE+'/api/v1/ledger',{headers}),
+        fetch(API_BASE+'/api/v1/ledger/watch',{headers})
+      ]);
+      if(lr.ok)renderLedger(await lr.json());
+      if(wr.ok)renderWatch(await wr.json());
+    }catch(e){}
+  }
+  function renderLedger(d){
+    const el=document.getElementById('ledgerHero');if(!el)return;
+    const total=d.recovered_total||0, jobs=d.jobs_recovered||0;
+    const series=d.series||[], max=Math.max(1,...series.map(x=>x.value));
+    const since=d.since?new Date(d.since).toLocaleDateString(undefined,{month:'long',year:'numeric'}):null;
+    if(!total&&!jobs){
+      el.innerHTML='<div class="lg-k">Recovered revenue</div>'+
+        '<div class="lg-v" style="color:var(--dim)">$0</div>'+
+        '<div class="lg-sub">Nothing recovered yet. Upload a lead list and run a scan, and every job Revio brings back is counted here permanently.</div>';
+      return;
+    }
+    const bars=series.length?'<div class="lg-bars">'+series.map(x=>
+      '<i style="height:'+Math.max(4,(x.value/max)*100)+'%" title="'+x.month+': '+fmtUSD(x.value)+'"></i>').join('')+'</div>':'';
+    el.innerHTML=
+      '<div class="lg-top"><span class="lg-k">Recovered revenue</span>'+
+      (since?'<span class="lg-since">since '+esc(since)+'</span>':'')+'</div>'+
+      '<div class="lg-v">'+fmtUSD(total)+'</div>'+
+      '<div class="lg-sub">Brought back from leads that had already gone quiet. That is <b>'+jobs+
+        ' job'+(jobs===1?'':'s')+'</b> you had already paid to acquire once.</div>'+
+      bars+
+      '<div class="lg-foot">'+
+        '<div><b>'+fmtUSD(d.recovered_this_month||0)+'</b><span>this month</span></div>'+
+        '<div><b>'+jobs+'</b><span>jobs recovered</span></div>'+
+        '<div><b>'+(d.patterns_learned||0).toLocaleString()+'</b><span>patterns learned about your business</span></div>'+
+      '</div>';
+  }
+  function renderWatch(d){
+    const el=document.getElementById('watchStrip');if(!el)return;
+    const cool=d.cooling||0, crit=d.critical||0, items=d.items||[];
+    if(!cool&&!crit){
+      el.innerHTML='<div class="wtile"><div class="wk">Pipeline watch</div>'+
+        '<div class="wv" style="color:var(--signal)">Clear</div>'+
+        '<div class="ws">Nothing is going quiet right now. Revio keeps watching every lead so none of them go cold unnoticed.</div></div>';
+      return;
+    }
+    el.innerHTML=
+      '<div class="wtile warn"><div class="wk">Going quiet</div><div class="wv">'+cool+'</div>'+
+        '<div class="ws">no contact in '+(d.cooling_days||14)+'+ days</div></div>'+
+      '<div class="wtile crit"><div class="wk">About to go cold</div><div class="wv">'+crit+'</div>'+
+        '<div class="ws">no contact in '+(d.critical_days||25)+'+ days</div></div>'+
+      '<div class="wtile"><div class="wk">Value at risk</div><div class="wv">'+fmtUSD(d.at_risk_value)+'</div>'+
+        '<div class="ws">catch these now, not in 90 days</div></div>';
+    const host=document.getElementById('revivableOut');
+    if(host&&items.length&&!host.dataset.watchPainted){
+      host.dataset.watchPainted='1';
+    }
+    const wl=document.getElementById('watchList');
+    if(wl)wl.innerHTML=items.map(i=>
+      '<div class="wrow'+(i.state==='critical'?' crit':'')+'"><span class="dot"></span>'+
+      '<div class="who"><b>'+esc(i.name||'—')+'</b><span>'+esc(i.company||'')+'</span></div>'+
+      '<span class="amt">'+fmtUSD(i.value)+'</span>'+
+      '<span class="age">'+i.days_quiet+'d quiet</span></div>').join('');
+  }
 
   /* ══════════════════════════════════════════════════════════════════
      System Board — an explorable canvas of the AI workforce.
